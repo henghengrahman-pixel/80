@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Sliders</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#090909;
+      --panel:#131313;
+      --panel-2:#1b1b1b;
+      --line:rgba(255,255,255,.08);
+      --line-2:rgba(255,255,255,.14);
+      --text:#fff;
+      --text-soft:rgba(255,255,255,.68);
+      --gold:#ffd36a;
+      --red:#ff5a6b;
+      --green:#27c768;
+      --shadow:0 24px 60px rgba(0,0,0,.35);
+      --sidebar-width:260px;
+    }
+
+    body{
+      min-height:100vh;
+      font-family:"Inter",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255,211,106,.08), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(255,90,107,.06), transparent 24%),
+        linear-gradient(180deg,#070707,#101010);
+    }
+
+    a{text-decoration:none;color:inherit}
+    button,input,textarea{font:inherit}
+
+    .admin-layout{
+      display:grid;
+      grid-template-columns:var(--sidebar-width) 1fr;
+      min-height:100vh;
+    }
+
+    .sidebar{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)),
+        linear-gradient(180deg, #101010, #0b0b0b);
+      border-right:1px solid var(--line);
+      padding:24px 16px;
+      position:sticky;
+      top:0;
+      height:100vh;
+    }
+
+    .sidebar-logo{
+      padding:10px 12px 22px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:18px;
+    }
+
+    .sidebar-logo strong{
+      display:block;
+      font-size:24px;
+      font-weight:900;
+      color:var(--gold);
+      letter-spacing:.03em;
+    }
+
+    .sidebar-logo span{
+      display:block;
+      margin-top:6px;
+      font-size:12px;
+      color:var(--text-soft);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .sidebar-menu{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .sidebar-link{
+      min-height:46px;
+      border-radius:14px;
+      padding:0 14px;
+      display:flex;
+      align-items:center;
+      color:#fff;
+      font-size:14px;
+      font-weight:800;
+      background:transparent;
+      border:1px solid transparent;
+      transition:.2s ease;
+    }
+
+    .sidebar-link:hover{
+      background:rgba(255,255,255,.04);
+      border-color:var(--line);
+    }
+
+    .sidebar-link.active{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      border-color:transparent;
+      box-shadow:0 16px 26px rgba(255,203,47,.16);
+    }
+
+    .content{
+      padding:24px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:20px;
+    }
+
+    .topbar h1{
+      font-size:34px;
+      line-height:1.08;
+      font-weight:900;
+      letter-spacing:-.03em;
+      margin-bottom:6px;
+    }
+
+    .topbar p{
+      color:var(--text-soft);
+      font-size:14px;
+      line-height:1.8;
+      max-width:720px;
+    }
+
+    .topbar-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      min-height:44px;
+      padding:10px 16px;
+      border:none;
+      border-radius:14px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      font-size:14px;
+      font-weight:800;
+      transition:.2s ease;
+    }
+
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      box-shadow:0 14px 26px rgba(255,203,47,.14);
+    }
+    .btn-dark{
+      color:#fff;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line-2);
+    }
+    .btn-danger{
+      color:#fff;
+      background:linear-gradient(180deg,#ff7181,#ff4d5d);
+      box-shadow:0 16px 26px rgba(255,77,93,.14);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:390px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02)),
+        linear-gradient(180deg, rgba(20,20,20,.94), rgba(10,10,10,.96));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding:18px 18px 12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .panel-head h2{
+      font-size:22px;
+      font-weight:900;
+      margin-bottom:6px;
+      letter-spacing:-.02em;
+    }
+
+    .panel-head p{
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.7;
+    }
+
+    .panel-body{
+      padding:18px;
+    }
+
+    .form-grid{
+      display:grid;
+      gap:14px;
+    }
+
+    .form-group{
+      display:grid;
+      gap:8px;
+    }
+
+    .form-label{
+      font-size:13px;
+      font-weight:800;
+      color:#fff;
+    }
+
+    .form-input,
+    .form-textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      outline:none;
+      transition:.2s ease;
+    }
+
+    .form-input{
+      height:50px;
+      padding:0 14px;
+    }
+
+    .form-textarea{
+      min-height:100px;
+      padding:14px;
+      resize:vertical;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder{
+      color:rgba(255,255,255,.36);
+    }
+
+    .form-input:focus,
+    .form-textarea:focus{
+      border-color:rgba(255,211,106,.42);
+      box-shadow:0 0 0 4px rgba(255,211,106,.08);
+      background:rgba(255,255,255,.055);
+    }
+
+    .help-text{
+      color:var(--text-soft);
+      font-size:12px;
+      line-height:1.6;
+      margin-top:-2px;
+    }
+
+    .inline-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .check-wrap{
+      min-height:50px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.04);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 14px;
+    }
+
+    .check-wrap input{
+      width:18px;
+      height:18px;
+      accent-color:#ffcb2f;
+    }
+
+    .check-wrap label{
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .slider-list{
+      display:grid;
+      gap:14px;
+    }
+
+    .slider-card{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      overflow:hidden;
+      background:rgba(255,255,255,.03);
+    }
+
+    .slider-image-wrap{
+      position:relative;
+      aspect-ratio:16/7;
+      background:#111;
+      overflow:hidden;
+    }
+
+    .slider-image{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .slider-overlay{
+      position:absolute;
+      inset:auto 0 0 0;
+      padding:16px;
+      background:linear-gradient(180deg, transparent, rgba(0,0,0,.78));
+    }
+
+    .slider-overlay h3{
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:6px;
+      line-height:1.2;
+    }
+
+    .slider-overlay p{
+      color:rgba(255,255,255,.82);
+      font-size:13px;
+      line-height:1.7;
+      max-width:90%;
+    }
+
+    .slider-meta{
+      padding:14px 16px 16px;
+      display:grid;
+      gap:12px;
+    }
+
+    .meta-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:30px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .badge-active{
+      background:rgba(37,192,109,.14);
+      color:#7ff0b2;
+      border:1px solid rgba(37,192,109,.22);
+    }
+
+    .badge-inactive{
+      background:rgba(255,90,107,.12);
+      color:#ffd4d9;
+      border:1px solid rgba(255,90,107,.22);
+    }
+
+    .badge-order{
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.1);
+    }
+
+    .meta-item{
+      display:grid;
+      gap:4px;
+    }
+
+    .meta-item strong{
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .meta-item span{
+      font-size:12px;
+      color:var(--text-soft);
+      line-height:1.7;
+      word-break:break-word;
+    }
+
+    .action-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn-sm{
+      min-height:38px;
+      padding:8px 12px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .empty-box{
+      padding:28px 20px 34px;
+      text-align:center;
+    }
+
+    .empty-box h3{
+      font-size:22px;
+      margin-bottom:10px;
+      font-weight:900;
+    }
+
+    .empty-box p{
+      color:var(--text-soft);
+      line-height:1.8;
+      font-size:14px;
+      max-width:560px;
+      margin:0 auto;
+    }
+
+    .stats-row{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .stat-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .stat-card span{
+      display:block;
+      color:var(--text-soft);
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:8px;
+    }
+
+    .stat-card strong{
+      font-size:28px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    @media (max-width: 1080px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    @media (max-width: 920px){
+      .admin-layout{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+        padding:14px;
+      }
+      .sidebar-logo{margin-bottom:12px}
+      .sidebar-menu{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      .content{padding:16px}
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .topbar-actions{
+        justify-content:flex-start;
+      }
+    }
+
+    @media (max-width: 640px){
+      .panel-head,.panel-body{padding:14px}
+      .inline-2,
+      .stats-row{grid-template-columns:1fr}
+      .sidebar-menu{grid-template-columns:1fr}
+      .topbar h1{font-size:28px}
+      .btn,.btn-sm{width:100%}
+      .action-row{flex-direction:column;align-items:stretch}
+      .slider-overlay h3{font-size:17px}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <strong>ADMIN</strong>
+        <span>Management Panel</span>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/itsiregar8008/dashboard" class="sidebar-link">Dashboard</a>
+        <a href="/itsiregar8008/sliders" class="sidebar-link active">Slider</a>
+        <a href="/itsiregar8008/providers" class="sidebar-link">Provider</a>
+        <a href="/itsiregar8008/games" class="sidebar-link">Games</a>
+        <a href="/itsiregar8008/settings" class="sidebar-link">Settings</a>
+        <a href="/itsiregar8008/logout" class="sidebar-link">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section class="topbar">
+        <div>
+          <h1>Kelola Slider</h1>
+          <p>
+            Tambahkan gambar slider, judul, subtitle, tombol aksi, urutan tampil,
+            dan status aktif untuk bagian hero halaman utama.
+          </p>
+        </div>
+
+        <div class="topbar-actions">
+          <a href="/itsiregar8008/dashboard" class="btn btn-dark">Kembali Dashboard</a>
+        </div>
+      </section>
+
+      <section class="stats-row">
+        <div class="stat-card">
+          <span>Total Slider</span>
+          <strong><%= Array.isArray(sliders) ? sliders.length : 0 %></strong>
+        </div>
+        <div class="stat-card">
+          <span>Slider Aktif</span>
+          <strong><%= Array.isArray(sliders) ? sliders.filter(item => item.isActive !== false).length : 0 %></strong>
+        </div>
+        <div class="stat-card">
+          <span>Slider Nonaktif</span>
+          <strong><%= Array.isArray(sliders) ? sliders.filter(item => item.isActive === false).length : 0 %></strong>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Tambah Slider</h2>
+            <p>
+              Upload gambar slider atau isi URL gambar. Tombol aksi bisa dikosongkan bila tidak dipakai.
+            </p>
+          </div>
+
+          <div class="panel-body">
+            <form
+              action="/itsiregar8008/sliders"
+              method="POST"
+              enctype="multipart/form-data"
+              class="form-grid"
+            >
+              <div class="form-group">
+                <label class="form-label" for="title">Judul Slider</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  class="form-input"
+                  placeholder="Contoh: Promo Spesial Hari Ini"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="subtitle">Subtitle Slider</label>
+                <textarea
+                  id="subtitle"
+                  name="subtitle"
+                  class="form-textarea"
+                  placeholder="Deskripsi singkat slider"
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="image">Upload Gambar</label>
+                <input
+                  type="file"
+                  id="image"
+                  name="image"
+                  class="form-input"
+                  accept="image/*"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="imageUrl">Atau URL Gambar</label>
+                <input
+                  type="text"
+                  id="imageUrl"
+                  name="imageUrl"
+                  class="form-input"
+                  placeholder="https://domain.com/slider.jpg"
+                />
+              </div>
+
+              <div class="inline-2">
+                <div class="form-group">
+                  <label class="form-label" for="buttonText">Teks Tombol</label>
+                  <input
+                    type="text"
+                    id="buttonText"
+                    name="buttonText"
+                    class="form-input"
+                    placeholder="Contoh: Lihat Sekarang"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="buttonLink">Link Tombol</label>
+                  <input
+                    type="text"
+                    id="buttonLink"
+                    name="buttonLink"
+                    class="form-input"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div class="inline-2">
+                <div class="form-group">
+                  <label class="form-label" for="sortOrder">Urutan Tampil</label>
+                  <input
+                    type="number"
+                    id="sortOrder"
+                    name="sortOrder"
+                    class="form-input"
+                    placeholder="0"
+                    value="0"
+                  />
+                  <div class="help-text">
+                    Angka kecil tampil lebih dulu.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">&nbsp;</label>
+                  <div class="check-wrap">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      name="isActive"
+                      checked
+                    />
+                    <label for="isActive">Aktifkan slider</label>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Simpan Slider</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Daftar Slider</h2>
+            <p>
+              Slider aktif akan tampil di halaman utama sesuai urutan tampil.
+            </p>
+          </div>
+
+          <% if (sliders && sliders.length) { %>
+            <div class="panel-body">
+              <div class="slider-list">
+                <% sliders
+                  .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                  .forEach((slider, index) => { %>
+                  <article class="slider-card">
+                    <div class="slider-image-wrap">
+                      <img
+                        src="<%= slider.imageUrl || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop' %>"
+                        alt="<%= slider.title || `Slider ${index + 1}` %>"
+                        class="slider-image"
+                        loading="lazy"
+                      />
+
+                      <% if (slider.title || slider.subtitle) { %>
+                        <div class="slider-overlay">
+                          <% if (slider.title) { %>
+                            <h3><%= slider.title %></h3>
+                          <% } %>
+                          <% if (slider.subtitle) { %>
+                            <p><%= slider.subtitle %></p>
+                          <% } %>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="slider-meta">
+                      <div class="meta-row">
+                        <span class="badge badge-order">Urutan: <%= typeof slider.sortOrder !== 'undefined' ? slider.sortOrder : 0 %></span>
+
+                        <% if (slider.isActive !== false) { %>
+                          <span class="badge badge-active">Aktif</span>
+                        <% } else { %>
+                          <span class="badge badge-inactive">Nonaktif</span>
+                        <% } %>
+                      </div>
+
+                      <div class="meta-item">
+                        <strong>Button</strong>
+                        <span>
+                          <%= slider.buttonText || '-' %>
+                          <% if (slider.buttonLink) { %>
+                            — <%= slider.buttonLink %>
+                          <% } %>
+                        </span>
+                      </div>
+
+                      <div class="action-row">
+                        <form
+                          action="/itsiregar8008/sliders/<%= slider.id %>/delete"
+                          method="POST"
+                          onsubmit="return confirm('Yakin mau hapus slider ini?')"
+                        >
+                          <button type="submit" class="btn btn-danger btn-sm">Hapus Slider</button>
+                        </form>
+                      </div>
+                    </div>
+                  </article>
+                <% }) %>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="empty-box">
+              <h3>Belum ada slider</h3>
+              <p>
+                Tambahkan slider pertama kamu lewat form di sebelah kiri agar
+                hero homepage langsung tampil lebih menarik.
+              </p>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
