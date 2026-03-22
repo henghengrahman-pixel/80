@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Settings</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#090909;
+      --panel:#131313;
+      --panel-2:#1b1b1b;
+      --line:rgba(255,255,255,.08);
+      --line-2:rgba(255,255,255,.14);
+      --text:#fff;
+      --text-soft:rgba(255,255,255,.68);
+      --gold:#ffd36a;
+      --gold-2:#ffb703;
+      --red:#ff5a6b;
+      --green:#27c768;
+      --radius:18px;
+      --shadow:0 24px 60px rgba(0,0,0,.35);
+      --sidebar-width:260px;
+    }
+
+    body{
+      min-height:100vh;
+      font-family:"Inter",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255,211,106,.08), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(255,90,107,.06), transparent 24%),
+        linear-gradient(180deg,#070707,#101010);
+    }
+
+    a{text-decoration:none;color:inherit}
+    button,input,textarea,select{font:inherit}
+
+    .admin-layout{
+      display:grid;
+      grid-template-columns:var(--sidebar-width) 1fr;
+      min-height:100vh;
+    }
+
+    .sidebar{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)),
+        linear-gradient(180deg, #101010, #0b0b0b);
+      border-right:1px solid var(--line);
+      padding:24px 16px;
+      position:sticky;
+      top:0;
+      height:100vh;
+    }
+
+    .sidebar-logo{
+      padding:10px 12px 22px;
+      border-bottom:1px solid var(--line);
+      margin-bottom:18px;
+    }
+
+    .sidebar-logo strong{
+      display:block;
+      font-size:24px;
+      font-weight:900;
+      color:var(--gold);
+      letter-spacing:.03em;
+    }
+
+    .sidebar-logo span{
+      display:block;
+      margin-top:6px;
+      font-size:12px;
+      color:var(--text-soft);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .sidebar-menu{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .sidebar-link{
+      min-height:46px;
+      border-radius:14px;
+      padding:0 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#fff;
+      font-size:14px;
+      font-weight:800;
+      background:transparent;
+      border:1px solid transparent;
+      transition:.2s ease;
+    }
+
+    .sidebar-link:hover{
+      background:rgba(255,255,255,.04);
+      border-color:var(--line);
+    }
+
+    .sidebar-link.active{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      border-color:transparent;
+      box-shadow:0 16px 26px rgba(255,203,47,.16);
+    }
+
+    .content{
+      padding:24px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:20px;
+    }
+
+    .topbar h1{
+      font-size:34px;
+      line-height:1.08;
+      font-weight:900;
+      letter-spacing:-.03em;
+      margin-bottom:6px;
+    }
+
+    .topbar p{
+      color:var(--text-soft);
+      font-size:14px;
+      line-height:1.8;
+      max-width:760px;
+    }
+
+    .topbar-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      min-height:44px;
+      padding:10px 16px;
+      border:none;
+      border-radius:14px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      font-size:14px;
+      font-weight:800;
+      transition:.2s ease;
+    }
+
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      box-shadow:0 14px 26px rgba(255,203,47,.14);
+    }
+    .btn-dark{
+      color:#fff;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--line-2);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02)),
+        linear-gradient(180deg, rgba(20,20,20,.94), rgba(10,10,10,.96));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding:18px 18px 12px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .panel-head h2{
+      font-size:22px;
+      font-weight:900;
+      margin-bottom:6px;
+      letter-spacing:-.02em;
+    }
+
+    .panel-head p{
+      color:var(--text-soft);
+      font-size:13px;
+      line-height:1.7;
+    }
+
+    .panel-body{
+      padding:18px;
+    }
+
+    .form-grid{
+      display:grid;
+      gap:14px;
+    }
+
+    .section-title{
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.56);
+      margin:6px 0 2px;
+    }
+
+    .form-group{
+      display:grid;
+      gap:8px;
+    }
+
+    .form-label{
+      font-size:13px;
+      font-weight:800;
+      color:#fff;
+    }
+
+    .form-input,
+    .form-textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      outline:none;
+      transition:.2s ease;
+    }
+
+    .form-input{
+      height:50px;
+      padding:0 14px;
+    }
+
+    .form-textarea{
+      min-height:110px;
+      padding:14px;
+      resize:vertical;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder{
+      color:rgba(255,255,255,.36);
+    }
+
+    .form-input:focus,
+    .form-textarea:focus{
+      border-color:rgba(255,211,106,.42);
+      box-shadow:0 0 0 4px rgba(255,211,106,.08);
+      background:rgba(255,255,255,.055);
+    }
+
+    .help-text{
+      color:var(--text-soft);
+      font-size:12px;
+      line-height:1.6;
+      margin-top:-2px;
+    }
+
+    .inline-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .preview-stack{
+      display:grid;
+      gap:14px;
+    }
+
+    .preview-card{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .preview-card h3{
+      font-size:15px;
+      font-weight:900;
+      margin-bottom:10px;
+    }
+
+    .mini-hero{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+      background:#111;
+      position:relative;
+      min-height:200px;
+      background-size:cover;
+      background-position:center;
+    }
+
+    .mini-hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.75));
+    }
+
+    .mini-hero-inner{
+      position:relative;
+      z-index:2;
+      padding:16px;
+    }
+
+    .mini-logo{
+      max-height:46px;
+      max-width:180px;
+      object-fit:contain;
+      margin-bottom:14px;
+      display:block;
+    }
+
+    .mini-logo-fallback{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:46px;
+      padding:0 14px;
+      border-radius:12px;
+      background:rgba(255,255,255,.08);
+      color:var(--gold);
+      font-size:18px;
+      font-weight:900;
+      margin-bottom:14px;
+    }
+
+    .mini-ticker{
+      min-height:40px;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      display:flex;
+      margin-bottom:14px;
+    }
+
+    .mini-ticker-label{
+      min-width:54px;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      color:#111;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .mini-ticker-text{
+      flex:1;
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      background:rgba(255,255,255,.06);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .mini-buttons{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .mini-btn{
+      min-height:42px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(255,255,255,.06);
+    }
+
+    .mini-btn.gold{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      border-color:transparent;
+    }
+
+    .mini-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .mini-item{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .mini-item strong{
+      display:block;
+      font-size:13px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+
+    .mini-item span{
+      display:block;
+      color:var(--text-soft);
+      font-size:12px;
+      line-height:1.6;
+      word-break:break-word;
+    }
+
+    .save-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding-top:4px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width: 1080px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    @media (max-width: 920px){
+      .admin-layout{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+        padding:14px;
+      }
+      .sidebar-logo{margin-bottom:12px}
+      .sidebar-menu{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+      .content{padding:16px}
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+      .topbar-actions{
+        justify-content:flex-start;
+      }
+    }
+
+    @media (max-width: 640px){
+      .panel-head,.panel-body{padding:14px}
+      .inline-2{grid-template-columns:1fr}
+      .sidebar-menu{grid-template-columns:1fr}
+      .topbar h1{font-size:28px}
+      .btn{width:100%}
+      .save-row{flex-direction:column;align-items:stretch}
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <strong>ADMIN</strong>
+        <span>Management Panel</span>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/itsiregar8008/dashboard" class="sidebar-link">Dashboard</a>
+        <a href="/itsiregar8008/sliders" class="sidebar-link">Slider</a>
+        <a href="/itsiregar8008/providers" class="sidebar-link">Provider</a>
+        <a href="/itsiregar8008/games" class="sidebar-link">Games</a>
+        <a href="/itsiregar8008/settings" class="sidebar-link active">Settings</a>
+        <a href="/itsiregar8008/logout" class="sidebar-link">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section class="topbar">
+        <div>
+          <h1>Pengaturan Website</h1>
+          <p>
+            Atur nama situs, deskripsi, running text, background, logo, link tombol,
+            data SEO, dan akses login admin dari satu halaman.
+          </p>
+        </div>
+
+        <div class="topbar-actions">
+          <a href="/itsiregar8008/dashboard" class="btn btn-dark">Kembali Dashboard</a>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Form Pengaturan</h2>
+            <p>
+              Semua perubahan di halaman ini akan langsung memengaruhi tampilan website.
+            </p>
+          </div>
+
+          <div class="panel-body">
+            <form action="/itsiregar8008/settings" method="POST" class="form-grid">
+              <div class="section-title">Informasi Website</div>
+
+              <div class="form-group">
+                <label class="form-label" for="siteName">Nama Website</label>
+                <input
+                  type="text"
+                  id="siteName"
+                  name="siteName"
+                  class="form-input"
+                  placeholder="Contoh: Live Promo Center"
+                  value="<%= settings?.siteName || '' %>"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="siteDescription">Deskripsi Website</label>
+                <textarea
+                  id="siteDescription"
+                  name="siteDescription"
+                  class="form-textarea"
+                  placeholder="Deskripsi singkat website"
+                ><%= settings?.siteDescription || '' %></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="runningText">Running Text</label>
+                <input
+                  type="text"
+                  id="runningText"
+                  name="runningText"
+                  class="form-input"
+                  placeholder="Teks berjalan di atas slider"
+                  value="<%= settings?.runningText || '' %>"
+                />
+              </div>
+
+              <div class="section-title">Tampilan</div>
+
+              <div class="form-group">
+                <label class="form-label" for="heroBackground">URL Background</label>
+                <input
+                  type="text"
+                  id="heroBackground"
+                  name="heroBackground"
+                  class="form-input"
+                  placeholder="https://domain.com/background.jpg"
+                  value="<%= settings?.heroBackground || '' %>"
+                />
+                <div class="help-text">
+                  Dipakai sebagai background utama website.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="logoUrl">URL Logo</label>
+                <input
+                  type="text"
+                  id="logoUrl"
+                  name="logoUrl"
+                  class="form-input"
+                  placeholder="https://domain.com/logo.png"
+                  value="<%= settings?.logoUrl || '' %>"
+                />
+              </div>
+
+              <div class="section-title">Link Tombol</div>
+
+              <div class="inline-2">
+                <div class="form-group">
+                  <label class="form-label" for="loginButtonLink">Link Tombol Login</label>
+                  <input
+                    type="text"
+                    id="loginButtonLink"
+                    name="loginButtonLink"
+                    class="form-input"
+                    placeholder="https://..."
+                    value="<%= settings?.loginButtonLink || '' %>"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="daftarButtonLink">Link Tombol Daftar</label>
+                  <input
+                    type="text"
+                    id="daftarButtonLink"
+                    name="daftarButtonLink"
+                    class="form-input"
+                    placeholder="https://..."
+                    value="<%= settings?.daftarButtonLink || '' %>"
+                  />
+                </div>
+              </div>
+
+              <div class="inline-2">
+                <div class="form-group">
+                  <label class="form-label" for="promosiButtonLink">Link Tombol Promosi</label>
+                  <input
+                    type="text"
+                    id="promosiButtonLink"
+                    name="promosiButtonLink"
+                    class="form-input"
+                    placeholder="https://..."
+                    value="<%= settings?.promosiButtonLink || '' %>"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="contactButtonLink">Link Tombol Contact</label>
+                  <input
+                    type="text"
+                    id="contactButtonLink"
+                    name="contactButtonLink"
+                    class="form-input"
+                    placeholder="https://..."
+                    value="<%= settings?.contactButtonLink || '' %>"
+                  />
+                </div>
+              </div>
+
+              <div class="section-title">SEO</div>
+
+              <div class="form-group">
+                <label class="form-label" for="seoTitle">SEO Title</label>
+                <input
+                  type="text"
+                  id="seoTitle"
+                  name="seoTitle"
+                  class="form-input"
+                  placeholder="Judul SEO website"
+                  value="<%= settings?.seoTitle || '' %>"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="seoDescription">SEO Description</label>
+                <textarea
+                  id="seoDescription"
+                  name="seoDescription"
+                  class="form-textarea"
+                  placeholder="Deskripsi SEO website"
+                ><%= settings?.seoDescription || '' %></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="seoKeywords">SEO Keywords</label>
+                <input
+                  type="text"
+                  id="seoKeywords"
+                  name="seoKeywords"
+                  class="form-input"
+                  placeholder="keyword1, keyword2, keyword3"
+                  value="<%= settings?.seoKeywords || '' %>"
+                />
+              </div>
+
+              <div class="section-title">Akses Admin</div>
+
+              <div class="inline-2">
+                <div class="form-group">
+                  <label class="form-label" for="adminUsername">Username Admin</label>
+                  <input
+                    type="text"
+                    id="adminUsername"
+                    name="adminUsername"
+                    class="form-input"
+                    placeholder="admin"
+                    value="<%= settings?.adminUsername || '' %>"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="adminPassword">Password Admin</label>
+                  <input
+                    type="text"
+                    id="adminPassword"
+                    name="adminPassword"
+                    class="form-input"
+                    placeholder="123456"
+                    value="<%= settings?.adminPassword || '' %>"
+                  />
+                </div>
+              </div>
+
+              <div class="save-row">
+                <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="preview-stack">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Preview Singkat</h2>
+              <p>Tampilan ringkas berdasarkan data settings saat ini.</p>
+            </div>
+
+            <div class="panel-body">
+              <div
+                class="mini-hero"
+                style="background-image:url('<%= settings?.heroBackground || "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop" %>')"
+              >
+                <div class="mini-hero-inner">
+                  <% if (settings?.logoUrl) { %>
+                    <img
+                      src="<%= settings.logoUrl %>"
+                      alt="<%= settings.siteName || 'Logo website' %>"
+                      class="mini-logo"
+                    />
+                  <% } else { %>
+                    <div class="mini-logo-fallback"><%= settings?.siteName || "LOGO" %></div>
+                  <% } %>
+
+                  <div class="mini-ticker">
+                    <div class="mini-ticker-label">Info</div>
+                    <div class="mini-ticker-text">
+                      <%= settings?.runningText || 'Running text belum diisi' %>
+                    </div>
+                  </div>
+
+                  <div class="mini-buttons">
+                    <div class="mini-btn">Login</div>
+                    <div class="mini-btn gold">Daftar</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Ringkasan Data</h2>
+              <p>Ringkasan cepat nilai pengaturan saat ini.</p>
+            </div>
+
+            <div class="panel-body">
+              <div class="mini-list">
+                <div class="mini-item">
+                  <strong>Nama Website</strong>
+                  <span><%= settings?.siteName || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>SEO Title</strong>
+                  <span><%= settings?.seoTitle || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>Login Link</strong>
+                  <span><%= settings?.loginButtonLink || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>Daftar Link</strong>
+                  <span><%= settings?.daftarButtonLink || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>Promosi Link</strong>
+                  <span><%= settings?.promosiButtonLink || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>Contact Link</strong>
+                  <span><%= settings?.contactButtonLink || '-' %></span>
+                </div>
+
+                <div class="mini-item">
+                  <strong>Admin Username</strong>
+                  <span><%= settings?.adminUsername || '-' %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
