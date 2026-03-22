@@ -5,20 +5,44 @@ const multer = require("multer");
 const session = require("express-session");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 const ROOT_DIR = __dirname;
-const DATA_DIR = path.join(ROOT_DIR, "data");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const UPLOAD_DIR = path.join(PUBLIC_DIR, "uploads");
 
+/**
+ * Railway / production:
+ * set DATA_DIR ke volume path, misalnya /data
+ * local fallback ke ./data
+ */
+const DATA_DIR =
+  process.env.DATA_DIR && String(process.env.DATA_DIR).trim()
+    ? path.resolve(process.env.DATA_DIR)
+    : path.join(ROOT_DIR, "data");
+
+const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
+const SLIDER_UPLOAD_DIR = path.join(UPLOAD_DIR, "sliders");
+const PROVIDER_UPLOAD_DIR = path.join(UPLOAD_DIR, "providers");
+const GAME_UPLOAD_DIR = path.join(UPLOAD_DIR, "games");
+
+const ADMIN_PATH = "/itsiregar8008";
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "admin").trim();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "123456").trim();
+const SESSION_SECRET = String(
+  process.env.SESSION_SECRET || "change-this-session-secret"
+).trim();
+const APP_BASE_URL = String(process.env.APP_BASE_URL || "").replace(/\/+$/, "");
+
+/* =======================
+   CREATE REQUIRED FOLDERS
+======================= */
 [
   DATA_DIR,
-  PUBLIC_DIR,
   UPLOAD_DIR,
-  path.join(UPLOAD_DIR, "sliders"),
-  path.join(UPLOAD_DIR, "providers"),
-  path.join(UPLOAD_DIR, "games"),
+  SLIDER_UPLOAD_DIR,
+  PROVIDER_UPLOAD_DIR,
+  GAME_UPLOAD_DIR,
+  PUBLIC_DIR,
   path.join(ROOT_DIR, "views"),
   path.join(ROOT_DIR, "views", "admin"),
   path.join(PUBLIC_DIR, "css"),
@@ -26,31 +50,58 @@ const UPLOAD_DIR = path.join(PUBLIC_DIR, "uploads");
   path.join(PUBLIC_DIR, "images")
 ].forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
 
+/* =======================
+   EXPRESS CONFIG
+======================= */
 app.set("view engine", "ejs");
 app.set("views", path.join(ROOT_DIR, "views"));
+app.set("trust proxy", 1);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(express.static(PUBLIC_DIR));
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "itsiregar8008-secret-key",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 1000 * 60 * 60 * 12
     }
   })
 );
 
+/* =======================
+   JSON HELPERS
+======================= */
 function ensureFile(fileName, defaultValue) {
   const filePath = path.join(DATA_DIR, fileName);
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), "utf8");
   }
+}
+
+function readJSON(fileName, fallback) {
+  try {
+    const filePath = path.join(DATA_DIR, fileName);
+    if (!fs.existsSync(filePath)) return fallback;
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error(`Gagal baca ${fileName}:`, err.message);
+    return fallback;
+  }
+}
+
+function writeJSON(fileName, data) {
+  const filePath = path.join(DATA_DIR, fileName);
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
 }
 
 ensureFile("settings.json", {
@@ -63,8 +114,6 @@ ensureFile("settings.json", {
   daftarButtonLink: "#",
   promosiButtonLink: "#",
   contactButtonLink: "#",
-  adminUsername: "admin",
-  adminPassword: "123456",
   seoTitle: "Live Promo Center",
   seoDescription: "Halaman promo dan katalog game modern",
   seoKeywords: "promo, katalog game, provider game, informasi game"
@@ -74,33 +123,38 @@ ensureFile("sliders.json", []);
 ensureFile("providers.json", []);
 ensureFile("games.json", []);
 
-function readJSON(fileName, fallback) {
-  try {
-    const fullPath = path.join(DATA_DIR, fileName);
-    if (!fs.existsSync(fullPath)) return fallback;
-    const raw = fs.readFileSync(fullPath, "utf8");
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error(`Gagal baca ${fileName}:`, err.message);
-    return fallback;
-  }
-}
-
-function writeJSON(fileName, data) {
-  const fullPath = path.join(DATA_DIR, fileName);
-  fs.writeFileSync(fullPath, JSON.stringify(data, null, 2), "utf8");
+/* =======================
+   UTIL
+======================= */
+function sanitizeText(value = "") {
+  return String(value).trim();
 }
 
 function makeId(prefix = "id") {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function sanitizeText(value = "") {
-  return String(value).trim();
+function makeSlug(value = "") {
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function randomInt(min, max) {
+  const a = Math.ceil(min);
+  const b = Math.floor(max);
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
 }
 
 function jakartaNowParts() {
   const now = new Date();
+
   const weekday = new Intl.DateTimeFormat("id-ID", {
     timeZone: "Asia/Jakarta",
     weekday: "long"
@@ -126,16 +180,6 @@ function jakartaNowParts() {
     fullDateTime: `${weekday}, ${datePart} ${timePart} WIB`,
     timePart
   };
-}
-
-function randomInt(min, max) {
-  const a = Math.ceil(min);
-  const b = Math.floor(max);
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-
-function pad2(n) {
-  return String(n).padStart(2, "0");
 }
 
 function makeFutureTimeRange() {
@@ -198,6 +242,7 @@ function buildDefaultPattern() {
   ];
 
   const turboPool = ["Turbo On ☑️", "Turbo Off ❌"];
+
   return Array.from({ length: 3 }).map(() => ({
     label: stepPool[randomInt(0, stepPool.length - 1)],
     turbo: turboPool[randomInt(0, turboPool.length - 1)]
@@ -220,21 +265,33 @@ function withDynamicGameData(game) {
   };
 }
 
+/* =======================
+   AUTH
+======================= */
 function authRequired(req, res, next) {
   if (!req.session || !req.session.isAdmin) {
-    return res.redirect("/itsiregar8008");
+    return res.redirect(ADMIN_PATH);
   }
   next();
 }
 
+app.use((req, res, next) => {
+  res.locals.isAdmin = !!(req.session && req.session.isAdmin);
+  res.locals.adminPath = ADMIN_PATH;
+  next();
+});
+
+/* =======================
+   MULTER
+======================= */
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     const target = sanitizeText(req.body.uploadType || req.query.uploadType || "misc");
     let dir = UPLOAD_DIR;
 
-    if (target === "slider") dir = path.join(UPLOAD_DIR, "sliders");
-    else if (target === "provider") dir = path.join(UPLOAD_DIR, "providers");
-    else if (target === "game") dir = path.join(UPLOAD_DIR, "games");
+    if (target === "slider") dir = SLIDER_UPLOAD_DIR;
+    else if (target === "provider") dir = PROVIDER_UPLOAD_DIR;
+    else if (target === "game") dir = GAME_UPLOAD_DIR;
 
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
@@ -258,11 +315,9 @@ const upload = multer({
   }
 });
 
-app.use((req, res, next) => {
-  res.locals.isAdmin = !!(req.session && req.session.isAdmin);
-  next();
-});
-
+/* =======================
+   FRONTEND
+======================= */
 app.get("/", (req, res) => {
   const settings = readJSON("settings.json", {});
   const sliders = readJSON("sliders.json", []);
@@ -285,7 +340,8 @@ app.get("/", (req, res) => {
     games: activeGames,
     updateLabel: dateInfo.fullDate,
     jakartaNow: dateInfo.fullDateTime,
-    currentProvider: null
+    currentProvider: null,
+    baseUrl: APP_BASE_URL
   });
 });
 
@@ -317,12 +373,13 @@ app.get("/provider/:slug", (req, res) => {
     games: filteredGames,
     updateLabel: dateInfo.fullDate,
     jakartaNow: dateInfo.fullDateTime,
-    currentProvider: provider
+    currentProvider: provider,
+    baseUrl: APP_BASE_URL
   });
 });
 
 app.get("/api/jakarta-time", (req, res) => {
-  return res.json(jakartaNowParts());
+  res.json(jakartaNowParts());
 });
 
 app.get("/api/games", (req, res) => {
@@ -332,33 +389,33 @@ app.get("/api/games", (req, res) => {
     .filter((g) => (providerSlug ? g.providerSlug === providerSlug : true))
     .map((g) => withDynamicGameData(g));
 
-  return res.json({
+  res.json({
     success: true,
     items: games,
     jakarta: jakartaNowParts()
   });
 });
 
-app.get("/itsiregar8008", (req, res) => {
+/* =======================
+   ADMIN LOGIN
+======================= */
+app.get(ADMIN_PATH, (req, res) => {
   if (req.session && req.session.isAdmin) {
-    return res.redirect("/itsiregar8008/dashboard");
+    return res.redirect(`${ADMIN_PATH}/dashboard`);
   }
+
   res.render("admin/login", {
     error: ""
   });
 });
 
-app.post("/itsiregar8008", (req, res) => {
-  const settings = readJSON("settings.json", {});
+app.post(ADMIN_PATH, (req, res) => {
   const username = sanitizeText(req.body.username);
   const password = sanitizeText(req.body.password);
 
-  if (
-    username === sanitizeText(settings.adminUsername || "admin") &&
-    password === sanitizeText(settings.adminPassword || "123456")
-  ) {
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
-    return res.redirect("/itsiregar8008/dashboard");
+    return res.redirect(`${ADMIN_PATH}/dashboard`);
   }
 
   return res.render("admin/login", {
@@ -366,13 +423,16 @@ app.post("/itsiregar8008", (req, res) => {
   });
 });
 
-app.get("/itsiregar8008/logout", authRequired, (req, res) => {
+app.get(`${ADMIN_PATH}/logout`, authRequired, (req, res) => {
   req.session.destroy(() => {
-    res.redirect("/itsiregar8008");
+    res.redirect(ADMIN_PATH);
   });
 });
 
-app.get("/itsiregar8008/dashboard", authRequired, (req, res) => {
+/* =======================
+   ADMIN DASHBOARD
+======================= */
+app.get(`${ADMIN_PATH}/dashboard`, authRequired, (req, res) => {
   const sliders = readJSON("sliders.json", []);
   const providers = readJSON("providers.json", []);
   const games = readJSON("games.json", []);
@@ -388,12 +448,15 @@ app.get("/itsiregar8008/dashboard", authRequired, (req, res) => {
   });
 });
 
-app.get("/itsiregar8008/settings", authRequired, (req, res) => {
+/* =======================
+   ADMIN SETTINGS
+======================= */
+app.get(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
   const settings = readJSON("settings.json", {});
   res.render("admin/settings", { settings });
 });
 
-app.post("/itsiregar8008/settings", authRequired, (req, res) => {
+app.post(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
   const oldSettings = readJSON("settings.json", {});
 
   const nextSettings = {
@@ -409,22 +472,23 @@ app.post("/itsiregar8008/settings", authRequired, (req, res) => {
     contactButtonLink: sanitizeText(req.body.contactButtonLink),
     seoTitle: sanitizeText(req.body.seoTitle),
     seoDescription: sanitizeText(req.body.seoDescription),
-    seoKeywords: sanitizeText(req.body.seoKeywords),
-    adminUsername: sanitizeText(req.body.adminUsername || oldSettings.adminUsername || "admin"),
-    adminPassword: sanitizeText(req.body.adminPassword || oldSettings.adminPassword || "123456")
+    seoKeywords: sanitizeText(req.body.seoKeywords)
   };
 
   writeJSON("settings.json", nextSettings);
-  res.redirect("/itsiregar8008/settings");
+  res.redirect(`${ADMIN_PATH}/settings`);
 });
 
-app.get("/itsiregar8008/sliders", authRequired, (req, res) => {
+/* =======================
+   ADMIN SLIDERS
+======================= */
+app.get(`${ADMIN_PATH}/sliders`, authRequired, (req, res) => {
   const sliders = readJSON("sliders.json", []);
   res.render("admin/sliders", { sliders });
 });
 
 app.post(
-  "/itsiregar8008/sliders",
+  `${ADMIN_PATH}/sliders`,
   authRequired,
   (req, res, next) => {
     req.body.uploadType = "slider";
@@ -451,25 +515,28 @@ app.post(
     });
 
     writeJSON("sliders.json", sliders);
-    res.redirect("/itsiregar8008/sliders");
+    res.redirect(`${ADMIN_PATH}/sliders`);
   }
 );
 
-app.post("/itsiregar8008/sliders/:id/delete", authRequired, (req, res) => {
+app.post(`${ADMIN_PATH}/sliders/:id/delete`, authRequired, (req, res) => {
   const sliders = readJSON("sliders.json", []);
   const id = sanitizeText(req.params.id);
   const next = sliders.filter((item) => item.id !== id);
   writeJSON("sliders.json", next);
-  res.redirect("/itsiregar8008/sliders");
+  res.redirect(`${ADMIN_PATH}/sliders`);
 });
 
-app.get("/itsiregar8008/providers", authRequired, (req, res) => {
+/* =======================
+   ADMIN PROVIDERS
+======================= */
+app.get(`${ADMIN_PATH}/providers`, authRequired, (req, res) => {
   const providers = readJSON("providers.json", []);
   res.render("admin/providers", { providers });
 });
 
 app.post(
-  "/itsiregar8008/providers",
+  `${ADMIN_PATH}/providers`,
   authRequired,
   (req, res, next) => {
     req.body.uploadType = "provider";
@@ -479,9 +546,7 @@ app.post(
   (req, res) => {
     const providers = readJSON("providers.json", []);
     const name = sanitizeText(req.body.name);
-    const slug =
-      sanitizeText(req.body.slug) ||
-      name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const slug = sanitizeText(req.body.slug) || makeSlug(name);
 
     const logoUrl = req.file
       ? `/uploads/providers/${req.file.filename}`
@@ -498,11 +563,11 @@ app.post(
     });
 
     writeJSON("providers.json", providers);
-    res.redirect("/itsiregar8008/providers");
+    res.redirect(`${ADMIN_PATH}/providers`);
   }
 );
 
-app.post("/itsiregar8008/providers/:id/delete", authRequired, (req, res) => {
+app.post(`${ADMIN_PATH}/providers/:id/delete`, authRequired, (req, res) => {
   const providers = readJSON("providers.json", []);
   const games = readJSON("games.json", []);
   const id = sanitizeText(req.params.id);
@@ -516,17 +581,20 @@ app.post("/itsiregar8008/providers/:id/delete", authRequired, (req, res) => {
     writeJSON("games.json", nextGames);
   }
 
-  res.redirect("/itsiregar8008/providers");
+  res.redirect(`${ADMIN_PATH}/providers`);
 });
 
-app.get("/itsiregar8008/games", authRequired, (req, res) => {
+/* =======================
+   ADMIN GAMES
+======================= */
+app.get(`${ADMIN_PATH}/games`, authRequired, (req, res) => {
   const games = readJSON("games.json", []);
   const providers = readJSON("providers.json", []);
   res.render("admin/games", { games, providers });
 });
 
 app.post(
-  "/itsiregar8008/games",
+  `${ADMIN_PATH}/games`,
   authRequired,
   (req, res, next) => {
     req.body.uploadType = "game";
@@ -563,23 +631,31 @@ app.post(
     });
 
     writeJSON("games.json", games);
-    res.redirect("/itsiregar8008/games");
+    res.redirect(`${ADMIN_PATH}/games`);
   }
 );
 
-app.post("/itsiregar8008/games/:id/delete", authRequired, (req, res) => {
+app.post(`${ADMIN_PATH}/games/:id/delete`, authRequired, (req, res) => {
   const games = readJSON("games.json", []);
   const id = sanitizeText(req.params.id);
   const next = games.filter((g) => g.id !== id);
   writeJSON("games.json", next);
-  res.redirect("/itsiregar8008/games");
+  res.redirect(`${ADMIN_PATH}/games`);
 });
 
+/* =======================
+   ERROR HANDLER
+======================= */
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send(`Terjadi error: ${err.message}`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server jalan di http://localhost:${PORT}`);
+/* =======================
+   START
+======================= */
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server jalan di port ${PORT}`);
+  console.log(`DATA_DIR: ${DATA_DIR}`);
+  console.log(`UPLOAD_DIR: ${UPLOAD_DIR}`);
 });
