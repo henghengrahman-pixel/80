@@ -11,7 +11,6 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet"
   />
-
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
@@ -23,9 +22,6 @@
       --text:#fff;
       --text-soft:rgba(255,255,255,.68);
       --gold:#ffd36a;
-      --gold-2:#ffb703;
-      --red:#ff5a6b;
-      --green:#27c768;
       --radius:18px;
       --shadow:0 24px 60px rgba(0,0,0,.35);
       --sidebar-width:260px;
@@ -42,7 +38,7 @@
     }
 
     a{text-decoration:none;color:inherit}
-    button,input,textarea,select{font:inherit}
+    button,input,textarea{font:inherit}
 
     .admin-layout{
       display:grid;
@@ -118,9 +114,7 @@
       box-shadow:0 16px 26px rgba(255,203,47,.16);
     }
 
-    .content{
-      padding:24px;
-    }
+    .content{padding:24px}
 
     .topbar{
       display:flex;
@@ -145,13 +139,6 @@
       max-width:760px;
     }
 
-    .topbar-actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
     .btn{
       min-height:44px;
       padding:10px 16px;
@@ -167,16 +154,16 @@
       transition:.2s ease;
     }
 
-    .btn:hover{transform:translateY(-1px)}
-    .btn-primary{
-      color:#111;
-      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
-      box-shadow:0 14px 26px rgba(255,203,47,.14);
-    }
     .btn-dark{
       color:#fff;
       background:rgba(255,255,255,.06);
       border:1px solid var(--line-2);
+    }
+
+    .btn-primary{
+      color:#111;
+      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
+      box-shadow:0 14px 26px rgba(255,203,47,.14);
     }
 
     .grid{
@@ -214,14 +201,8 @@
       line-height:1.7;
     }
 
-    .panel-body{
-      padding:18px;
-    }
-
-    .form-grid{
-      display:grid;
-      gap:14px;
-    }
+    .panel-body{padding:18px}
+    .form-grid{display:grid;gap:14px}
 
     .section-title{
       font-size:13px;
@@ -265,11 +246,6 @@
       resize:vertical;
     }
 
-    .form-input::placeholder,
-    .form-textarea::placeholder{
-      color:rgba(255,255,255,.36);
-    }
-
     .form-input:focus,
     .form-textarea:focus{
       border-color:rgba(255,211,106,.42);
@@ -281,7 +257,6 @@
       color:var(--text-soft);
       font-size:12px;
       line-height:1.6;
-      margin-top:-2px;
     }
 
     .inline-2{
@@ -300,116 +275,6 @@
       border-radius:18px;
       padding:16px;
       background:rgba(255,255,255,.03);
-    }
-
-    .preview-card h3{
-      font-size:15px;
-      font-weight:900;
-      margin-bottom:10px;
-    }
-
-    .mini-hero{
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.08);
-      overflow:hidden;
-      background:#111;
-      position:relative;
-      min-height:200px;
-      background-size:cover;
-      background-position:center;
-    }
-
-    .mini-hero::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.75));
-    }
-
-    .mini-hero-inner{
-      position:relative;
-      z-index:2;
-      padding:16px;
-    }
-
-    .mini-logo{
-      max-height:46px;
-      max-width:180px;
-      object-fit:contain;
-      margin-bottom:14px;
-      display:block;
-    }
-
-    .mini-logo-fallback{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height:46px;
-      padding:0 14px;
-      border-radius:12px;
-      background:rgba(255,255,255,.08);
-      color:var(--gold);
-      font-size:18px;
-      font-weight:900;
-      margin-bottom:14px;
-    }
-
-    .mini-ticker{
-      min-height:40px;
-      border-radius:12px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.08);
-      display:flex;
-      margin-bottom:14px;
-    }
-
-    .mini-ticker-label{
-      min-width:54px;
-      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
-      color:#111;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
-      font-weight:900;
-    }
-
-    .mini-ticker-text{
-      flex:1;
-      display:flex;
-      align-items:center;
-      padding:0 12px;
-      color:#fff;
-      font-size:12px;
-      font-weight:700;
-      background:rgba(255,255,255,.06);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .mini-buttons{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .mini-btn{
-      min-height:42px;
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:13px;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,.1);
-      background:rgba(255,255,255,.06);
-    }
-
-    .mini-btn.gold{
-      color:#111;
-      background:linear-gradient(180deg,#fff0b9,#ffcb2f);
-      border-color:transparent;
     }
 
     .mini-list{
@@ -449,10 +314,6 @@
       line-height:1.7;
     }
 
-    .env-note strong{
-      color:#fff0b9;
-    }
-
     .save-row{
       display:flex;
       align-items:center;
@@ -461,18 +322,17 @@
       flex-wrap:wrap;
     }
 
-    @media (max-width: 1080px){
+    @media (max-width:1080px){
       .grid{grid-template-columns:1fr}
     }
 
-    @media (max-width: 920px){
+    @media (max-width:920px){
       .admin-layout{grid-template-columns:1fr}
       .sidebar{
         position:relative;
         height:auto;
         padding:14px;
       }
-      .sidebar-logo{margin-bottom:12px}
       .sidebar-menu{
         display:grid;
         grid-template-columns:repeat(2,minmax(0,1fr));
@@ -482,13 +342,9 @@
         flex-direction:column;
         align-items:stretch;
       }
-      .topbar-actions{
-        justify-content:flex-start;
-      }
     }
 
-    @media (max-width: 640px){
-      .panel-head,.panel-body{padding:14px}
+    @media (max-width:640px){
       .inline-2{grid-template-columns:1fr}
       .sidebar-menu{grid-template-columns:1fr}
       .topbar h1{font-size:28px}
@@ -525,18 +381,14 @@
           </p>
         </div>
 
-        <div class="topbar-actions">
-          <a href="/itsiregar8008/dashboard" class="btn btn-dark">Kembali Dashboard</a>
-        </div>
+        <a href="/itsiregar8008/dashboard" class="btn btn-dark">Kembali Dashboard</a>
       </section>
 
       <section class="grid">
         <div class="panel">
           <div class="panel-head">
             <h2>Form Pengaturan</h2>
-            <p>
-              Semua perubahan di halaman ini akan langsung memengaruhi tampilan website.
-            </p>
+            <p>Semua perubahan di halaman ini akan langsung memengaruhi tampilan website.</p>
           </div>
 
           <div class="panel-body">
@@ -589,9 +441,7 @@
                   placeholder="https://domain.com/background.jpg"
                   value="<%= settings?.heroBackground || '' %>"
                 />
-                <div class="help-text">
-                  Dipakai sebagai background utama website.
-                </div>
+                <div class="help-text">Dipakai sebagai background utama website.</div>
               </div>
 
               <div class="form-group">
@@ -712,96 +562,47 @@
         </div>
 
         <div class="preview-stack">
-          <div class="panel">
-            <div class="panel-head">
-              <h2>Preview Singkat</h2>
-              <p>Tampilan ringkas berdasarkan data settings saat ini.</p>
-            </div>
-
-            <div class="panel-body">
-              <div
-                class="mini-hero"
-                style="background-image:url('<%= settings?.heroBackground || "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop" %>')"
-              >
-                <div class="mini-hero-inner">
-                  <% if (settings?.logoUrl) { %>
-                    <img
-                      src="<%= settings.logoUrl %>"
-                      alt="<%= settings.siteName || 'Logo website' %>"
-                      class="mini-logo"
-                    />
-                  <% } else { %>
-                    <div class="mini-logo-fallback"><%= settings?.siteName || "LOGO" %></div>
-                  <% } %>
-
-                  <div class="mini-ticker">
-                    <div class="mini-ticker-label">Info</div>
-                    <div class="mini-ticker-text">
-                      <%= settings?.runningText || 'Running text belum diisi' %>
-                    </div>
-                  </div>
-
-                  <div class="mini-buttons">
-                    <div class="mini-btn">Login</div>
-                    <div class="mini-btn gold">Daftar</div>
-                  </div>
-                </div>
+          <div class="preview-card">
+            <div class="mini-list">
+              <div class="mini-item">
+                <strong>Nama Website</strong>
+                <span><%= settings?.siteName || '-' %></span>
               </div>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-head">
-              <h2>Ringkasan Data</h2>
-              <p>Ringkasan cepat nilai pengaturan saat ini.</p>
-            </div>
-
-            <div class="panel-body">
-              <div class="mini-list">
-                <div class="mini-item">
-                  <strong>Nama Website</strong>
-                  <span><%= settings?.siteName || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Deskripsi Website</strong>
-                  <span><%= settings?.siteDescription || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>SEO Title</strong>
-                  <span><%= settings?.seoTitle || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>SEO Description</strong>
-                  <span><%= settings?.seoDescription || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Login Link</strong>
-                  <span><%= settings?.loginButtonLink || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Daftar Link</strong>
-                  <span><%= settings?.daftarButtonLink || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Promosi Link</strong>
-                  <span><%= settings?.promosiButtonLink || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Contact Link</strong>
-                  <span><%= settings?.contactButtonLink || '-' %></span>
-                </div>
-
-                <div class="mini-item">
-                  <strong>Admin Login</strong>
-                  <span>Diambil dari environment Railway, bukan dari settings page.</span>
-                </div>
+              <div class="mini-item">
+                <strong>Deskripsi Website</strong>
+                <span><%= settings?.siteDescription || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Running Text</strong>
+                <span><%= settings?.runningText || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>SEO Title</strong>
+                <span><%= settings?.seoTitle || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>SEO Description</strong>
+                <span><%= settings?.seoDescription || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Login Link</strong>
+                <span><%= settings?.loginButtonLink || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Daftar Link</strong>
+                <span><%= settings?.daftarButtonLink || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Promosi Link</strong>
+                <span><%= settings?.promosiButtonLink || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Contact Link</strong>
+                <span><%= settings?.contactButtonLink || '-' %></span>
+              </div>
+              <div class="mini-item">
+                <strong>Admin Login</strong>
+                <span>Diambil dari environment Railway, bukan dari settings page.</span>
               </div>
             </div>
           </div>
