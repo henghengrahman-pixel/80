@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Games</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:Inter, sans-serif;
+  background:#0b0b0b;
+  color:#fff;
+}
+
+.admin-layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+  background:#111;
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:20px;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:900;
+  color:#ffd36a;
+  margin-bottom:30px;
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.menu a{
+  padding:12px 14px;
+  border-radius:10px;
+  text-decoration:none;
+  color:#fff;
+  background:#1a1a1a;
+  font-size:14px;
+}
+
+.menu a:hover{
+  background:#ffd36a;
+  color:#000;
+}
+
+/* CONTENT */
+.content{
+  padding:30px;
+}
+
+h1{
+  margin-bottom:20px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:350px 1fr;
+  gap:20px;
+}
+
+/* FORM */
+.panel{
+  background:#151515;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:15px;
+  padding:20px;
+}
+
+.panel h2{
+  margin-bottom:15px;
+}
+
+.form-group{
+  margin-bottom:12px;
+}
+
+.form-group label{
+  display:block;
+  font-size:13px;
+  margin-bottom:5px;
+}
+
+.form-group input,
+.form-group select{
+  width:100%;
+  height:40px;
+  border-radius:8px;
+  border:1px solid #333;
+  background:#000;
+  color:#fff;
+  padding:0 10px;
+}
+
+button{
+  background:#ffd36a;
+  border:none;
+  padding:10px 15px;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+table th,
+table td{
+  padding:10px;
+  border-bottom:1px solid #333;
+  font-size:13px;
+}
+
+img.logo{
+  width:60px;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .admin-layout{
+    grid-template-columns:1fr;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <div class="sidebar">
+    <div class="logo">ADMIN</div>
+    <div class="menu">
+      <a href="/itsiregar8008/dashboard">Dashboard</a>
+      <a href="/itsiregar8008/sliders">Slider</a>
+      <a href="/itsiregar8008/providers">Provider</a>
+      <a href="/itsiregar8008/games">Games</a>
+      <a href="/itsiregar8008/settings">Settings</a>
+      <a href="/itsiregar8008/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <h1>Kelola Games</h1>
+
+    <div class="grid">
+
+      <!-- FORM TAMBAH GAME -->
+      <div class="panel">
+        <h2>Tambah Game</h2>
+        <form action="/itsiregar8008/games" method="POST" enctype="multipart/form-data">
+
+          <div class="form-group">
+            <label>Nama Game</label>
+            <input type="text" name="title" required>
+          </div>
+
+          <div class="form-group">
+            <label>Provider</label>
+            <select name="providerId" required>
+              <% providers.forEach(p => { %>
+                <option value="<%= p.id %>"><%= p.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Upload Gambar Game</label>
+            <input type="file" name="image">
+          </div>
+
+          <div class="form-group">
+            <label>Atau URL Gambar</label>
+            <input type="text" name="imageUrl">
+          </div>
+
+          <div class="form-group">
+            <label>Link Game</label>
+            <input type="text" name="gameLink">
+          </div>
+
+          <div class="form-group">
+            <label>Urutan Tampil</label>
+            <input type="number" name="sortOrder" value="0">
+          </div>
+
+          <button type="submit">Simpan Game</button>
+
+        </form>
+      </div>
+
+      <!-- TABLE GAME -->
+      <div class="panel">
+        <h2>Daftar Games</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Gambar</th>
+              <th>Game</th>
+              <th>Provider</th>
+              <th>Urutan</th>
+              <th>Hapus</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% games.forEach(game => { %>
+              <tr>
+                <td>
+                  <% if(game.imageUrl){ %>
+                    <img src="<%= game.imageUrl %>" class="logo">
+                  <% } %>
+                </td>
+                <td><%= game.title %></td>
+                <td><%= game.providerName %></td>
+                <td><%= game.sortOrder %></td>
+                <td>
+                  <form action="/itsiregar8008/games/<%= game.id %>/delete" method="POST">
+                    <button style="background:#ff4d5d;color:#fff;">Hapus</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
