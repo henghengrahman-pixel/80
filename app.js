@@ -10,11 +10,6 @@ const PORT = Number(process.env.PORT || 3000);
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 
-/**
- * Railway / production:
- * set DATA_DIR ke volume path, misalnya /data
- * local fallback ke ./data
- */
 const DATA_DIR =
   process.env.DATA_DIR && String(process.env.DATA_DIR).trim()
     ? path.resolve(process.env.DATA_DIR)
@@ -27,11 +22,6 @@ const GAME_UPLOAD_DIR = path.join(UPLOAD_DIR, "games");
 
 const ADMIN_PATH = "/itsiregar8008";
 
-/**
- * ADMIN & SESSION
- * FULL dari Railway Variables
- * Tidak pakai default username/password
- */
 const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "").trim();
 const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "").trim();
 const SESSION_SECRET = String(process.env.SESSION_SECRET || "").trim();
@@ -49,9 +39,6 @@ if (!SESSION_SECRET) {
   throw new Error("Missing SESSION_SECRET in Railway Variables");
 }
 
-/* =======================
-   CREATE REQUIRED FOLDERS
-======================= */
 [
   DATA_DIR,
   UPLOAD_DIR,
@@ -66,9 +53,6 @@ if (!SESSION_SECRET) {
   path.join(PUBLIC_DIR, "images")
 ].forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
 
-/* =======================
-   EXPRESS CONFIG
-======================= */
 app.set("view engine", "ejs");
 app.set("views", path.join(ROOT_DIR, "views"));
 app.set("trust proxy", 1);
@@ -93,9 +77,6 @@ app.use(
   })
 );
 
-/* =======================
-   JSON HELPERS
-======================= */
 function ensureFile(fileName, defaultValue) {
   const filePath = path.join(DATA_DIR, fileName);
   if (!fs.existsSync(filePath)) {
@@ -139,9 +120,6 @@ ensureFile("sliders.json", []);
 ensureFile("providers.json", []);
 ensureFile("games.json", []);
 
-/* =======================
-   UTIL
-======================= */
 function sanitizeText(value = "") {
   return String(value).trim();
 }
@@ -166,6 +144,15 @@ function randomInt(min, max) {
 
 function pad2(n) {
   return String(n).padStart(2, "0");
+}
+
+function shuffleArray(items = []) {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 function jakartaNowParts() {
@@ -265,12 +252,15 @@ function buildDefaultPattern() {
   }));
 }
 
-function withDynamicGameData(game) {
+function withDynamicGameData(game, settings = {}) {
   const providerName = sanitizeText(game.providerName).toLowerCase();
   const score = randomScore();
+  const gameLink = sanitizeText(settings.loginButtonLink || "#");
 
   return {
     ...game,
+    title: sanitizeText(game.title || game.providerName || "Game"),
+    gameLink,
     score,
     scoreClass: scoreClass(score),
     timeRange: makeFutureTimeRange(),
@@ -281,9 +271,6 @@ function withDynamicGameData(game) {
   };
 }
 
-/* =======================
-   AUTH
-======================= */
 function authRequired(req, res, next) {
   if (!req.session || !req.session.isAdmin) {
     return res.redirect(ADMIN_PATH);
@@ -297,9 +284,6 @@ app.use((req, res, next) => {
   next();
 });
 
-/* =======================
-   MULTER
-======================= */
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     const target = sanitizeText(req.body.uploadType || req.query.uploadType || "misc");
@@ -331,9 +315,6 @@ const upload = multer({
   }
 });
 
-/* =======================
-   FRONTEND
-======================= */
 app.get("/", (req, res) => {
   const settings = readJSON("settings.json", {});
   const sliders = readJSON("sliders.json", []);
@@ -345,9 +326,11 @@ app.get("/", (req, res) => {
     .filter((p) => p.isActive !== false)
     .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-  const activeGames = games
-    .filter((g) => g.isActive !== false)
-    .map((g) => withDynamicGameData(g));
+  const activeGames = shuffleArray(
+    games
+      .filter((g) => g.isActive !== false)
+      .map((g) => withDynamicGameData(g, settings))
+  );
 
   res.render("home", {
     settings,
@@ -378,9 +361,11 @@ app.get("/provider/:slug", (req, res) => {
     return res.status(404).send("Provider tidak ditemukan");
   }
 
-  const filteredGames = games
-    .filter((g) => g.isActive !== false && g.providerSlug === slug)
-    .map((g) => withDynamicGameData(g));
+  const filteredGames = shuffleArray(
+    games
+      .filter((g) => g.isActive !== false && g.providerSlug === slug)
+      .map((g) => withDynamicGameData(g, settings))
+  );
 
   res.render("home", {
     settings,
@@ -399,11 +384,15 @@ app.get("/api/jakarta-time", (req, res) => {
 });
 
 app.get("/api/games", (req, res) => {
+  const settings = readJSON("settings.json", {});
   const providerSlug = sanitizeText(req.query.provider || "");
-  const games = readJSON("games.json", [])
-    .filter((g) => g.isActive !== false)
-    .filter((g) => (providerSlug ? g.providerSlug === providerSlug : true))
-    .map((g) => withDynamicGameData(g));
+
+  const games = shuffleArray(
+    readJSON("games.json", [])
+      .filter((g) => g.isActive !== false)
+      .filter((g) => (providerSlug ? g.providerSlug === providerSlug : true))
+      .map((g) => withDynamicGameData(g, settings))
+  );
 
   res.json({
     success: true,
@@ -412,9 +401,6 @@ app.get("/api/games", (req, res) => {
   });
 });
 
-/* =======================
-   ADMIN LOGIN
-======================= */
 app.get(ADMIN_PATH, (req, res) => {
   if (req.session && req.session.isAdmin) {
     return res.redirect(`${ADMIN_PATH}/dashboard`);
@@ -446,9 +432,6 @@ app.get(`${ADMIN_PATH}/logout`, authRequired, (req, res) => {
   });
 });
 
-/* =======================
-   ADMIN DASHBOARD
-======================= */
 app.get(`${ADMIN_PATH}/dashboard`, authRequired, (req, res) => {
   const sliders = readJSON("sliders.json", []);
   const providers = readJSON("providers.json", []);
@@ -465,9 +448,6 @@ app.get(`${ADMIN_PATH}/dashboard`, authRequired, (req, res) => {
   });
 });
 
-/* =======================
-   ADMIN SETTINGS
-======================= */
 app.get(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
   const settings = readJSON("settings.json", {});
   res.render("admin/settings", { settings });
@@ -496,9 +476,6 @@ app.post(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
   res.redirect(`${ADMIN_PATH}/settings`);
 });
 
-/* =======================
-   ADMIN SLIDERS
-======================= */
 app.get(`${ADMIN_PATH}/sliders`, authRequired, (req, res) => {
   const sliders = readJSON("sliders.json", []);
   res.render("admin/sliders", { sliders });
@@ -544,9 +521,6 @@ app.post(`${ADMIN_PATH}/sliders/:id/delete`, authRequired, (req, res) => {
   res.redirect(`${ADMIN_PATH}/sliders`);
 });
 
-/* =======================
-   ADMIN PROVIDERS
-======================= */
 app.get(`${ADMIN_PATH}/providers`, authRequired, (req, res) => {
   const providers = readJSON("providers.json", []);
   res.render("admin/providers", { providers });
@@ -601,9 +575,6 @@ app.post(`${ADMIN_PATH}/providers/:id/delete`, authRequired, (req, res) => {
   res.redirect(`${ADMIN_PATH}/providers`);
 });
 
-/* =======================
-   ADMIN GAMES
-======================= */
 app.get(`${ADMIN_PATH}/games`, authRequired, (req, res) => {
   const games = readJSON("games.json", []);
   const providers = readJSON("providers.json", []);
@@ -634,16 +605,15 @@ app.post(
 
     games.push({
       id: makeId("game"),
-      title: sanitizeText(req.body.title),
+      title: provider.name,
       imageUrl,
-      gameLink: sanitizeText(req.body.gameLink || "#"),
+      gameLink: "",
       providerId: provider.id,
       providerName: provider.name,
       providerSlug: provider.slug,
       providerLogoUrl: provider.logoUrl,
-      labelBadge: sanitizeText(req.body.labelBadge || "HOT"),
-      sortOrder: Number(req.body.sortOrder || 0),
-      isActive: req.body.isActive === "on",
+      labelBadge: "HOT",
+      isActive: true,
       createdAt: new Date().toISOString()
     });
 
@@ -660,17 +630,11 @@ app.post(`${ADMIN_PATH}/games/:id/delete`, authRequired, (req, res) => {
   res.redirect(`${ADMIN_PATH}/games`);
 });
 
-/* =======================
-   ERROR HANDLER
-======================= */
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send(`Terjadi error: ${err.message}`);
 });
 
-/* =======================
-   START
-======================= */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server jalan di port ${PORT}`);
   console.log(`DATA_DIR: ${DATA_DIR}`);
