@@ -563,7 +563,8 @@
         </form>
 
         <div class="login-note">
-          URL admin: <strong>/itsiregar8008</strong>
+          Username dan password admin mengikuti environment Railway:
+          <strong>ADMIN_USERNAME</strong> dan <strong>ADMIN_PASSWORD</strong>
         </div>
 
         <a href="/" class="back-link">
@@ -580,11 +581,13 @@
     const togglePassword = document.getElementById("togglePassword");
     const passwordInput = document.getElementById("password");
 
-    togglePassword?.addEventListener("click", () => {
-      const isPassword = passwordInput.type === "password";
-      passwordInput.type = isPassword ? "text" : "password";
-      togglePassword.textContent = isPassword ? "Tutup" : "Lihat";
-    });
+    if (togglePassword && passwordInput) {
+      togglePassword.addEventListener("click", () => {
+        const isPassword = passwordInput.type === "password";
+        passwordInput.type = isPassword ? "text" : "password";
+        togglePassword.textContent = isPassword ? "Tutup" : "Lihat";
+      });
+    }
   </script>
 </body>
 </html>
