@@ -21,7 +21,6 @@ body{
   min-height:100vh;
 }
 
-/* SIDEBAR */
 .sidebar{
   background:#111;
   border-right:1px solid rgba(255,255,255,.08);
@@ -48,20 +47,22 @@ body{
   color:#fff;
   background:#1a1a1a;
   font-size:14px;
+  font-weight:700;
 }
 
-.menu a:hover{
+.menu a:hover,
+.menu a.active{
   background:#ffd36a;
   color:#000;
 }
 
-/* CONTENT */
 .content{
   padding:30px;
 }
 
 h1{
   margin-bottom:20px;
+  font-size:28px;
 }
 
 .grid{
@@ -70,7 +71,6 @@ h1{
   gap:20px;
 }
 
-/* FORM */
 .panel{
   background:#151515;
   border:1px solid rgba(255,255,255,.08);
@@ -80,6 +80,14 @@ h1{
 
 .panel h2{
   margin-bottom:15px;
+  font-size:20px;
+}
+
+.panel p.sub{
+  font-size:13px;
+  line-height:1.6;
+  color:rgba(255,255,255,.65);
+  margin-bottom:16px;
 }
 
 .form-group{
@@ -89,30 +97,41 @@ h1{
 .form-group label{
   display:block;
   font-size:13px;
-  margin-bottom:5px;
+  margin-bottom:6px;
+  font-weight:700;
 }
 
 .form-group input,
 .form-group select{
   width:100%;
-  height:40px;
-  border-radius:8px;
+  height:44px;
+  border-radius:10px;
   border:1px solid #333;
   background:#000;
   color:#fff;
-  padding:0 10px;
+  padding:0 12px;
+}
+
+.form-help{
+  font-size:12px;
+  line-height:1.6;
+  color:rgba(255,255,255,.55);
+  margin-top:6px;
 }
 
 button{
   background:#ffd36a;
   border:none;
-  padding:10px 15px;
-  border-radius:8px;
-  font-weight:bold;
+  padding:11px 16px;
+  border-radius:10px;
+  font-weight:800;
   cursor:pointer;
 }
 
-/* TABLE */
+button:hover{
+  opacity:.95;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
@@ -120,16 +139,51 @@ table{
 
 table th,
 table td{
-  padding:10px;
+  padding:12px 10px;
   border-bottom:1px solid #333;
   font-size:13px;
+  text-align:left;
+  vertical-align:middle;
 }
 
-img.logo{
-  width:60px;
+.thumb{
+  width:64px;
+  height:64px;
+  object-fit:cover;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  display:block;
 }
 
-/* MOBILE */
+.empty-thumb{
+  width:64px;
+  height:64px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  color:rgba(255,255,255,.45);
+}
+
+.delete-btn{
+  background:#ff4d5d;
+  color:#fff;
+}
+
+.note-box{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(255,211,106,.08);
+  border:1px solid rgba(255,211,106,.2);
+  color:#ffe7a8;
+  font-size:12px;
+  line-height:1.7;
+}
+
 @media(max-width:900px){
   .admin-layout{
     grid-template-columns:1fr;
@@ -137,6 +191,14 @@ img.logo{
 
   .grid{
     grid-template-columns:1fr;
+  }
+
+  .content{
+    padding:18px;
+  }
+
+  .sidebar{
+    padding:16px;
   }
 }
 </style>
@@ -151,7 +213,7 @@ img.logo{
       <a href="/itsiregar8008/dashboard">Dashboard</a>
       <a href="/itsiregar8008/sliders">Slider</a>
       <a href="/itsiregar8008/providers">Provider</a>
-      <a href="/itsiregar8008/games">Games</a>
+      <a href="/itsiregar8008/games" class="active">Games</a>
       <a href="/itsiregar8008/settings">Settings</a>
       <a href="/itsiregar8008/logout">Logout</a>
     </div>
@@ -162,16 +224,13 @@ img.logo{
 
     <div class="grid">
 
-      <!-- FORM TAMBAH GAME -->
       <div class="panel">
         <h2>Tambah Game</h2>
+        <p class="sub">
+          Tambah gambar game per provider. Nama game, link game, dan urutan tampil sudah tidak dipakai lagi.
+        </p>
+
         <form action="/itsiregar8008/games" method="POST" enctype="multipart/form-data">
-
-          <div class="form-group">
-            <label>Nama Game</label>
-            <input type="text" name="title" required>
-          </div>
-
           <div class="form-group">
             <label>Provider</label>
             <select name="providerId" required>
@@ -183,30 +242,23 @@ img.logo{
 
           <div class="form-group">
             <label>Upload Gambar Game</label>
-            <input type="file" name="image">
+            <input type="file" name="image" accept="image/*">
           </div>
 
           <div class="form-group">
             <label>Atau URL Gambar</label>
-            <input type="text" name="imageUrl">
-          </div>
-
-          <div class="form-group">
-            <label>Link Game</label>
-            <input type="text" name="gameLink">
-          </div>
-
-          <div class="form-group">
-            <label>Urutan Tampil</label>
-            <input type="number" name="sortOrder" value="0">
+            <input type="text" name="imageUrl" placeholder="https://domain.com/game.jpg">
+            <div class="form-help">Pilih salah satu: upload gambar atau isi URL gambar.</div>
           </div>
 
           <button type="submit">Simpan Game</button>
-
         </form>
+
+        <div class="note-box">
+          Semua game di home akan memakai link login utama dari Settings dan urutan tampil akan diacak otomatis.
+        </div>
       </div>
 
-      <!-- TABLE GAME -->
       <div class="panel">
         <h2>Daftar Games</h2>
 
@@ -214,26 +266,30 @@ img.logo{
           <thead>
             <tr>
               <th>Gambar</th>
-              <th>Game</th>
               <th>Provider</th>
-              <th>Urutan</th>
               <th>Hapus</th>
             </tr>
           </thead>
           <tbody>
+            <% if (games.length === 0) { %>
+              <tr>
+                <td colspan="3">Belum ada data game.</td>
+              </tr>
+            <% } %>
+
             <% games.forEach(game => { %>
               <tr>
                 <td>
                   <% if(game.imageUrl){ %>
-                    <img src="<%= game.imageUrl %>" class="logo">
+                    <img src="<%= game.imageUrl %>" class="thumb" alt="Game <%= game.providerName %>">
+                  <% } else { %>
+                    <div class="empty-thumb">No Image</div>
                   <% } %>
                 </td>
-                <td><%= game.title %></td>
                 <td><%= game.providerName %></td>
-                <td><%= game.sortOrder %></td>
                 <td>
                   <form action="/itsiregar8008/games/<%= game.id %>/delete" method="POST">
-                    <button style="background:#ff4d5d;color:#fff;">Hapus</button>
+                    <button type="submit" class="delete-btn">Hapus</button>
                   </form>
                 </td>
               </tr>
