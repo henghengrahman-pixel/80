@@ -26,12 +26,28 @@ const PROVIDER_UPLOAD_DIR = path.join(UPLOAD_DIR, "providers");
 const GAME_UPLOAD_DIR = path.join(UPLOAD_DIR, "games");
 
 const ADMIN_PATH = "/itsiregar8008";
-const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "admin").trim();
-const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "123456").trim();
-const SESSION_SECRET = String(
-  process.env.SESSION_SECRET || "change-this-session-secret"
-).trim();
+
+/**
+ * ADMIN & SESSION
+ * FULL dari Railway Variables
+ * Tidak pakai default username/password
+ */
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "").trim();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "").trim();
+const SESSION_SECRET = String(process.env.SESSION_SECRET || "").trim();
 const APP_BASE_URL = String(process.env.APP_BASE_URL || "").replace(/\/+$/, "");
+
+if (!ADMIN_USERNAME) {
+  throw new Error("Missing ADMIN_USERNAME in Railway Variables");
+}
+
+if (!ADMIN_PASSWORD) {
+  throw new Error("Missing ADMIN_PASSWORD in Railway Variables");
+}
+
+if (!SESSION_SECRET) {
+  throw new Error("Missing SESSION_SECRET in Railway Variables");
+}
 
 /* =======================
    CREATE REQUIRED FOLDERS
@@ -415,10 +431,11 @@ app.post(ADMIN_PATH, (req, res) => {
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
+    req.session.adminUsername = ADMIN_USERNAME;
     return res.redirect(`${ADMIN_PATH}/dashboard`);
   }
 
-  return res.render("admin/login", {
+  return res.status(401).render("admin/login", {
     error: "Username atau password salah"
   });
 });
@@ -658,4 +675,5 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server jalan di port ${PORT}`);
   console.log(`DATA_DIR: ${DATA_DIR}`);
   console.log(`UPLOAD_DIR: ${UPLOAD_DIR}`);
+  console.log(`ADMIN_PATH: ${ADMIN_PATH}`);
 });
