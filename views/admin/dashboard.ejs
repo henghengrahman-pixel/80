@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:Inter, sans-serif;
+  background:#0b0b0b;
+  color:#fff;
+}
+
+.admin-layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+  background:#111;
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:20px;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:900;
+  color:#ffd36a;
+  margin-bottom:30px;
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.menu a{
+  padding:12px 14px;
+  border-radius:10px;
+  text-decoration:none;
+  color:#fff;
+  background:#1a1a1a;
+  font-size:14px;
+}
+
+.menu a:hover{
+  background:#ffd36a;
+  color:#000;
+}
+
+/* CONTENT */
+.content{
+  padding:30px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+
+.topbar h1{
+  font-size:28px;
+}
+
+.logout{
+  background:#ff4d5d;
+  padding:10px 14px;
+  border-radius:8px;
+  text-decoration:none;
+  color:#fff;
+}
+
+/* CARDS */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+
+.card{
+  background:#151515;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:15px;
+  padding:20px;
+}
+
+.card h3{
+  font-size:18px;
+  margin-bottom:10px;
+}
+
+.card p{
+  font-size:13px;
+  color:#aaa;
+}
+
+.card a{
+  display:inline-block;
+  margin-top:10px;
+  background:#ffd36a;
+  color:#000;
+  padding:8px 12px;
+  border-radius:8px;
+  text-decoration:none;
+  font-weight:bold;
+}
+
+/* MOBILE */
+@media(max-width:900px){
+  .admin-layout{
+    grid-template-columns:1fr;
+  }
+
+  .cards{
+    grid-template-columns:1fr 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <div class="sidebar">
+    <div class="logo">ADMIN PANEL</div>
+
+    <div class="menu">
+      <a href="/itsiregar8008/dashboard">Dashboard</a>
+      <a href="/itsiregar8008/slider">Slider</a>
+      <a href="/itsiregar8008/providers">Provider</a>
+      <a href="/itsiregar8008/games">Games</a>
+      <a href="/itsiregar8008/settings">Settings</a>
+      <a href="/itsiregar8008/running-text">Running Text</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="topbar">
+      <h1>Dashboard</h1>
+      <a href="/itsiregar8008/logout" class="logout">Logout</a>
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <h3>Slider</h3>
+        <p>Kelola gambar slider homepage</p>
+        <a href="/itsiregar8008/slider">Kelola</a>
+      </div>
+
+      <div class="card">
+        <h3>Provider</h3>
+        <p>Tambah logo provider dan kategori</p>
+        <a href="/itsiregar8008/providers">Kelola</a>
+      </div>
+
+      <div class="card">
+        <h3>Games</h3>
+        <p>Tambah game dan link permainan</p>
+        <a href="/itsiregar8008/games">Kelola</a>
+      </div>
+
+      <div class="card">
+        <h3>Settings</h3>
+        <p>Logo, background, link tombol</p>
+        <a href="/itsiregar8008/settings">Kelola</a>
+      </div>
+
+      <div class="card">
+        <h3>Running Text</h3>
+        <p>Teks berjalan di atas slider</p>
+        <a href="/itsiregar8008/running-text">Kelola</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
