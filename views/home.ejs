@@ -11,7 +11,7 @@
   <title><%= currentProvider ? `${currentProvider.name} | ${settings.seoTitle || settings.siteName}` : (settings.seoTitle || settings.siteName || "Live Promo Center") %></title>
   <meta
     name="description"
-    content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>"
+    content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>"
   />
   <meta
     name="keywords"
@@ -40,9 +40,9 @@
   <link rel="stylesheet" href="/css/style.css" />
 
   <style>
-    body {
+    body{
       background:
-        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.8)),
+        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.84)),
         url("<%= settings.heroBackground || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop' %>") center/cover fixed no-repeat;
     }
   </style>
@@ -74,7 +74,7 @@
         <div class="ticker">
           <div class="ticker-track">
             <% const tickerText = settings.runningText || "Selamat datang di Live Promo Center"; %>
-            <% for (let i = 0; i < 6; i++) { %>
+            <% for (let i = 0; i < 10; i++) { %>
               <span class="ticker-item"><%= tickerText %></span>
             <% } %>
           </div>
@@ -87,6 +87,7 @@
         <div class="swiper-wrapper">
           <% if (sliders && sliders.length) { %>
             <% sliders
+              .filter(slide => slide.isActive !== false)
               .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
               .forEach((slide, index) => { %>
               <div class="swiper-slide">
@@ -110,7 +111,12 @@
                     </div>
 
                     <% if (slide.buttonText && slide.buttonLink) { %>
-                      <a class="slide-btn" href="<%= slide.buttonLink %>" target="_blank" rel="nofollow noopener">
+                      <a
+                        class="slide-btn"
+                        href="<%= slide.buttonLink %>"
+                        target="_blank"
+                        rel="nofollow noopener"
+                      >
                         <%= slide.buttonText %>
                       </a>
                     <% } %>
@@ -149,38 +155,27 @@
           target="_blank"
           rel="nofollow noopener"
         >
-          Login
+          LOGIN
         </a>
+
         <a
           href="<%= settings.daftarButtonLink || '#' %>"
           class="cta-btn"
           target="_blank"
           rel="nofollow noopener"
         >
-          Daftar
+          DAFTAR
         </a>
       </div>
     </section>
 
     <section class="providers-shell">
       <div class="providers-scroll">
-        <div class="provider-item">
-          <a href="/" class="provider-link <%= !currentProvider ? 'active' : '' %>">
-            <div class="provider-icon-wrap">
-              <% if (settings.logoUrl) { %>
-                <img src="<%= settings.logoUrl %>" alt="Semua provider" class="provider-icon" loading="lazy" />
-              <% } else { %>
-                <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              <% } %>
-            </div>
-            <div class="provider-name">Semua</div>
-          </a>
-        </div>
-
         <% if (providers && providers.length) { %>
-          <% providers.forEach((provider) => { %>
+          <% providers
+            .filter(provider => provider.isActive !== false)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .forEach((provider) => { %>
             <div class="provider-item">
               <a
                 href="/provider/<%= provider.slug %>"
@@ -204,6 +199,21 @@
               </a>
             </div>
           <% }) %>
+        <% } else { %>
+          <div class="provider-item">
+            <a href="/" class="provider-link active">
+              <div class="provider-icon-wrap">
+                <% if (settings.logoUrl) { %>
+                  <img src="<%= settings.logoUrl %>" alt="Provider" class="provider-icon" loading="lazy" />
+                <% } else { %>
+                  <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                <% } %>
+              </div>
+              <div class="provider-name">PROVIDER</div>
+            </a>
+          </div>
         <% } %>
       </div>
     </section>
@@ -214,41 +224,19 @@
           <div class="panel-meta panel-meta-top">
             <span class="meta-chip">
               <span class="dot"></span>
-              <span>Update: <span id="update-date"><%= updateLabel %></span></span>
+              <span>Update: <span id="update-date"><%= updateLabel || jakartaNow %></span></span>
             </span>
           </div>
 
           <h1>
-            <%= currentProvider ? `${currentProvider.name} Live Catalog` : "Live Promo & Game Catalog" %>
+            <%= currentProvider ? `${currentProvider.name} LIVE CATALOG` : "LIVE PROMO & GAME CATALOG" %>
           </h1>
 
           <div class="panel-meta">
             <span class="meta-chip">
-              <span>Data tampil dinamis</span>
-            </span>
-            <span class="meta-chip">
               <span>Jakarta: <span id="jakarta-time"><%= jakartaNow %></span></span>
             </span>
           </div>
-
-          <% if (providers && providers.length) { %>
-            <div class="provider-top-filter">
-              <a href="/" class="provider-pill <%= !currentProvider ? 'active' : '' %>">
-                Semua
-              </a>
-              <% providers.slice(0, 8).forEach((provider) => { %>
-                <a
-                  href="/provider/<%= provider.slug %>"
-                  class="provider-pill <%= currentProvider && currentProvider.slug === provider.slug ? 'active' : '' %>"
-                >
-                  <% if (provider.logoUrl) { %>
-                    <img src="<%= provider.logoUrl %>" alt="<%= provider.name %>" loading="lazy" />
-                  <% } %>
-                  <span><%= provider.name %></span>
-                </a>
-              <% }) %>
-            </div>
-          <% } %>
         </div>
 
         <div class="panel-head-right">
@@ -271,6 +259,7 @@
       <% if (games && games.length) { %>
         <div class="games-grid" id="gamesGrid">
           <% games
+            .filter(game => game.isActive !== false)
             .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
             .forEach((game) => { %>
             <article class="game-card">
@@ -351,15 +340,15 @@
                         <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                         <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                       </svg>
-                      <span>Jam: <%= game.timeRange || "-" %></span>
+                      <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
                     </div>
 
                     <div class="score-box">
                       <div
                         class="score-fill <%= game.scoreClass || 'medium' %>"
-                        style="width:<%= game.score || 0 %>%"
+                        style="width:<%= game.score || game.winrate || 0 %>%"
                       >
-                        <span><%= game.score || 0 %>%</span>
+                        <span><%= game.score || game.winrate || 0 %>%</span>
                       </div>
                     </div>
                   </div>
@@ -437,24 +426,13 @@
   <script>
     const heroSwiper = new Swiper(".heroSwiper", {
       loop: true,
-      speed: 900,
+      speed: 850,
       grabCursor: true,
-      effect: "creative",
+      effect: "slide",
       autoplay: {
         delay: 3200,
         disableOnInteraction: false,
         pauseOnMouseEnter: true
-      },
-      creativeEffect: {
-        prev: {
-          shadow: true,
-          translate: ["-18%", 0, -1],
-          rotate: [0, 18, 0]
-        },
-        next: {
-          translate: ["18%", 0, -1],
-          rotate: [0, -18, 0]
-        }
       },
       pagination: {
         el: ".swiper-pagination",
@@ -599,12 +577,12 @@
                       <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                       <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
-                    <span>Jam: ${escapeHtml(game.timeRange || "-")}</span>
+                    <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
                   </div>
 
                   <div class="score-box">
-                    <div class="score-fill ${escapeHtml(game.scoreClass || "medium")}" style="width:${Number(game.score || 0)}%">
-                      <span>${Number(game.score || 0)}%</span>
+                    <div class="score-fill ${escapeHtml(game.scoreClass || "medium")}" style="width:${Number(game.score || game.winrate || 0)}%">
+                      <span>${Number(game.score || game.winrate || 0)}%</span>
                     </div>
                   </div>
                 </div>
@@ -623,7 +601,7 @@
         const data = await res.json();
 
         if (data && data.success) {
-          renderGames(data.items || []);
+          renderGames((data.items || []).filter(item => item.isActive !== false));
           if (jakartaTime) jakartaTime.textContent = data.jakarta?.fullDateTime || "";
           if (updateDate) updateDate.textContent = data.jakarta?.fullDate || "";
         }
