@@ -238,59 +238,117 @@ function getJakartaParts() {
   };
 }
 
-function normalizePattern(input, providerName = "") {
-  if (!input) return defaultPattern(providerName);
+function pickRandom(items = []) {
+  if (!Array.isArray(items) || !items.length) return null;
+  return items[Math.floor(Math.random() * items.length)];
+}
 
-  if (typeof input === "object" && input !== null) {
-    if (Array.isArray(input.rows)) return input;
-    return defaultPattern(providerName);
+function shuffle(items = []) {
+  const copy = Array.isArray(items) ? [...items] : [];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
+  return copy;
+}
 
-  const lines = String(input)
-    .split(/\r?\n/)
-    .map((x) => x.trim())
-    .filter(Boolean);
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
 
-  if (!lines.length) return defaultPattern(providerName);
+function randomInt(min, max) {
+  const a = Number(min);
+  const b = Number(max);
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
 
-  if (/pragmatic/i.test(providerName)) {
-    return {
-      type: "pragmatic",
-      rows: lines.slice(0, 4).map((line) => ({
-        label: line,
-        state1: "☑️",
-        state2: "☑️",
-        state3: "☑️",
-      })),
-    };
-  }
+function randomJamRange() {
+  const startHour = randomInt(0, 23);
+  const startMinute = randomInt(0, 59);
+  const durationMinutes = randomInt(35, 320);
+  const startTotal = startHour * 60 + startMinute;
+  const endTotal = Math.min(startTotal + durationMinutes, 23 * 60 + 59);
+
+  const sh = pad2(Math.floor(startTotal / 60));
+  const sm = pad2(startTotal % 60);
+  const eh = pad2(Math.floor(endTotal / 60));
+  const em = pad2(endTotal % 60);
+
+  return `${sh}:${sm} - ${eh}:${em}`;
+}
+
+function randomPercent() {
+  return randomInt(41, 88);
+}
+
+function isPragmaticProvider(providerName = "") {
+  return /pragmatic/i.test(String(providerName || ""));
+}
+
+function buildPragmaticPattern() {
+  const labelsPool = [
+    "Manual 3",
+    "Manual 5",
+    "Manual 7",
+    "Manual 9",
+    "Manual 10",
+    "Auto 10",
+    "Auto 20",
+  ];
+
+  const allowedStates = [
+    ["☑️", "❌", "☑️"],
+    ["❌", "❌", "☑️"],
+    ["❌", "❌", "❌"],
+    ["❌", "☑️", "❌"],
+    ["☑️", "❌", "❌"],
+  ];
 
   return {
-    type: "standard",
-    rows: lines.slice(0, 5).map((line) => ({ label: line, turbo: "" })),
+    type: "pragmatic",
+    rows: shuffle(labelsPool).slice(0, 3).map((label) => {
+      const states = pickRandom(allowedStates) || ["❌", "❌", "❌"];
+      return {
+        label,
+        state1: states[0],
+        state2: states[1],
+        state3: states[2],
+      };
+    }),
   };
 }
 
-function defaultPattern(providerName = "") {
-  if (/pragmatic/i.test(providerName)) {
-    return {
-      type: "pragmatic",
-      rows: [
-        { label: "Manual 10x", state1: "☑️", state2: "☑️", state3: "❌" },
-        { label: "Auto 30x", state1: "☑️", state2: "❌", state3: "☑️" },
-        { label: "Turbo OFF", state1: "☑️", state2: "☑️", state3: "☑️" },
-      ],
-    };
-  }
+function buildStandardPattern() {
+  const labelsPool = [
+    "Auto 10",
+    "Auto 20",
+    "Auto 30",
+    "Auto 50",
+    "Auto 70",
+    "Auto 100",
+    "Manual 3",
+    "Manual 5",
+    "Manual 7",
+    "Manual 9",
+    "Manual 10",
+  ];
 
   return {
     type: "standard",
-    rows: [
-      { label: "Auto Spin 20x", turbo: "" },
-      { label: "Naikkan bet perlahan", turbo: "" },
-      { label: "Main saat pola stabil", turbo: "" },
-    ],
+    rows: shuffle(labelsPool).slice(0, 3).map((label) => ({
+      label,
+      turbo: Math.random() > 0.5 ? "Turbo On" : "Turbo Off",
+      result: Math.random() > 0.5 ? "☑️" : "❌",
+    })),
   };
+}
+
+function normalizePattern(input, providerName = "") {
+  return isPragmaticProvider(providerName) ? buildPragmaticPattern() : buildStandardPattern();
+}
+
+function defaultPattern(providerName = "") {
+  return normalizePattern(null, providerName);
 }
 
 function scoreClass(score) {
@@ -338,27 +396,30 @@ function normalizeSlider(slide = {}) {
 }
 
 function normalizeGame(game = {}, providers = []) {
+  const settings = getSettings();
   const providerId = normalizeText(game.providerId);
   const provider = providers.find((p) => String(p.id) === providerId) || null;
-  const score = toNumber(game.score || game.winrate, 0);
+  const providerName = provider ? provider.name : normalizeText(game.providerName);
+  const score = randomPercent();
+  const timeRange = randomJamRange();
 
   return {
     id: game.id || createId("game"),
-    title: normalizeText(game.title),
-    slug: slugify(game.slug || game.title, "game"),
+    title: normalizeText(game.title) || `${providerName || "Game"} ${String(game.id || "").slice(-4) || "Slot"}`,
+    slug: slugify(game.slug || game.title || providerName || "game", "game"),
     providerId: provider ? provider.id : "",
-    providerName: provider ? provider.name : normalizeText(game.providerName),
+    providerName,
     providerSlug: provider ? provider.slug : normalizeText(game.providerSlug),
     providerLogoUrl: provider ? provider.logoUrl : normalizeText(game.providerLogoUrl),
     imageUrl: normalizeText(game.imageUrl),
-    gameLink: normalizeText(game.gameLink),
-    labelBadge: normalizeText(game.labelBadge),
-    timeRange: normalizeText(game.timeRange || game.jam),
-    jam: normalizeText(game.jam || game.timeRange),
+    gameLink: normalizeText(settings.loginButtonLink) || normalizeText(game.gameLink) || "#",
+    labelBadge: isPragmaticProvider(providerName) ? normalizeText(game.labelBadge) : (normalizeText(game.labelBadge) || "HOT"),
+    timeRange,
+    jam: timeRange,
     score,
     winrate: score,
-    scoreClass: normalizeText(game.scoreClass) || scoreClass(score),
-    pattern: normalizePattern(game.pattern, provider ? provider.name : ""),
+    scoreClass: scoreClass(score),
+    pattern: normalizePattern(game.pattern, providerName),
     isActive: game.isActive === false ? false : toBool(game.isActive, true),
     sortOrder: toNumber(game.sortOrder, 0),
     createdAt: game.createdAt || new Date().toISOString(),
@@ -579,29 +640,26 @@ app.get(`/${ADMIN_PATH}/games`, requireAdmin, (req, res) => {
 const createGameHandler = (req, res) => {
   const providers = getProviders().map(normalizeProvider);
   const games = getGames().map((game) => normalizeGame(game, providers));
-  const title = normalizeText(req.body.title);
   const providerId = normalizeText(req.body.providerId);
   const provider = providers.find((p) => p.id === providerId);
-  if (!title) return res.status(400).send("Judul game wajib diisi.");
   if (!provider) return res.status(400).send("Provider game wajib dipilih.");
+
+  const imageUrl = normalizeText(req.body.imageUrl);
+  if (!imageUrl) return res.status(400).send("URL gambar game wajib diisi.");
 
   const game = normalizeGame({
     id: createId("game"),
-    title,
-    slug: slugify(req.body.slug || title, "game"),
+    title: `${provider.name} ${games.length + 1}`,
+    slug: slugify(`${provider.name}-${games.length + 1}`, "game"),
     providerId: provider.id,
     providerName: provider.name,
     providerSlug: provider.slug,
     providerLogoUrl: provider.logoUrl,
-    imageUrl: normalizeText(req.body.imageUrl) || normalizeUpload(req.file, ""),
-    gameLink: normalizeText(req.body.gameLink),
-    labelBadge: normalizeText(req.body.labelBadge),
-    timeRange: normalizeText(req.body.timeRange),
-    jam: normalizeText(req.body.timeRange),
-    score: toNumber(req.body.score, 0),
-    pattern: normalizeText(req.body.pattern),
+    imageUrl,
+    gameLink: getSettings().loginButtonLink,
+    labelBadge: isPragmaticProvider(provider.name) ? "" : "HOT",
     isActive: toBool(req.body.isActive, true),
-    sortOrder: toNumber(req.body.sortOrder, games.length),
+    sortOrder: games.length,
     createdAt: new Date().toISOString(),
   }, providers);
 
@@ -609,10 +667,10 @@ const createGameHandler = (req, res) => {
   saveGames(games);
   return res.redirect(`/${ADMIN_PATH}/games`);
 };
-app.post(`/${ADMIN_PATH}/games`, requireAdmin, upload.single("imageFile"), createGameHandler);
-app.post(`/${ADMIN_PATH}/games/create`, requireAdmin, upload.single("imageFile"), createGameHandler);
+app.post(`/${ADMIN_PATH}/games`, requireAdmin, createGameHandler);
+app.post(`/${ADMIN_PATH}/games/create`, requireAdmin, createGameHandler);
 
-app.post(`/${ADMIN_PATH}/games/:id/update`, requireAdmin, upload.single("imageFile"), (req, res) => {
+app.post(`/${ADMIN_PATH}/games/:id/update`, requireAdmin, (req, res) => {
   const providers = getProviders().map(normalizeProvider);
   const games = getGames().map((game) => normalizeGame(game, providers));
   const idx = games.findIndex((x) => x.id === req.params.id);
@@ -623,26 +681,22 @@ app.post(`/${ADMIN_PATH}/games/:id/update`, requireAdmin, upload.single("imageFi
   const provider = providers.find((p) => p.id === providerId);
   if (!provider) return res.status(400).send("Provider game tidak valid.");
 
-  const nextImage = normalizeText(req.body.imageUrl) || normalizeUpload(req.file, current.imageUrl);
-  if (req.file && current.imageUrl && current.imageUrl !== nextImage) removeUploadedFile(current.imageUrl);
+  const imageUrl = normalizeText(req.body.imageUrl) || current.imageUrl;
+  if (!imageUrl) return res.status(400).send("URL gambar game wajib diisi.");
 
   games[idx] = normalizeGame({
     ...current,
-    title: normalizeText(req.body.title) || current.title,
-    slug: slugify(req.body.slug || req.body.title || current.title, "game"),
+    title: current.title || `${provider.name} ${idx + 1}`,
+    slug: current.slug || slugify(`${provider.name}-${idx + 1}`, "game"),
     providerId: provider.id,
     providerName: provider.name,
     providerSlug: provider.slug,
     providerLogoUrl: provider.logoUrl,
-    imageUrl: nextImage,
-    gameLink: normalizeText(req.body.gameLink) || current.gameLink,
-    labelBadge: normalizeText(req.body.labelBadge) || current.labelBadge,
-    timeRange: normalizeText(req.body.timeRange) || current.timeRange,
-    jam: normalizeText(req.body.timeRange) || current.jam,
-    score: req.body.score !== undefined && req.body.score !== "" ? toNumber(req.body.score, current.score) : current.score,
-    pattern: normalizeText(req.body.pattern) || current.pattern,
+    imageUrl,
+    gameLink: getSettings().loginButtonLink,
+    labelBadge: isPragmaticProvider(provider.name) ? "" : "HOT",
     isActive: toBool(req.body.isActive, current.isActive),
-    sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+    sortOrder: current.sortOrder,
     createdAt: current.createdAt,
   }, providers);
 
