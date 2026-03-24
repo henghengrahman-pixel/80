@@ -9,9 +9,10 @@
   />
 
   <title><%= currentProvider ? `${currentProvider.name} | ${settings.seoTitle || settings.siteName}` : (settings.seoTitle || settings.siteName || "Live Promo Center") %></title>
+
   <meta
     name="description"
-    content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>"
+    content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>"
   />
   <meta
     name="keywords"
@@ -22,11 +23,17 @@
 
   <meta property="og:type" content="website" />
   <meta property="og:title" content="<%= currentProvider ? `${currentProvider.name} | ${settings.siteName || 'Live Promo Center'}` : (settings.seoTitle || settings.siteName || 'Live Promo Center') %>" />
-  <meta property="og:description" content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>" />
-  <meta property="og:image" content="<%= settings.logoUrl || (sliders[0] && sliders[0].imageUrl) || '/images/placeholder-cover.jpg' %>" />
+  <meta property="og:description" content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>" />
+  <meta property="og:image" content="<%= ogImage || `${baseUrl}/images/placeholder-cover.jpg` %>" />
   <meta property="og:locale" content="id_ID" />
+  <meta property="og:url" content="<%= canonicalUrl %>" />
 
-  <link rel="canonical" href="/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<%= currentProvider ? `${currentProvider.name} | ${settings.siteName || 'Live Promo Center'}` : (settings.seoTitle || settings.siteName || 'Live Promo Center') %>" />
+  <meta name="twitter:description" content="<%= currentProvider ? `Katalog game dan promo ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'Halaman promo dan katalog game modern') %>" />
+  <meta name="twitter:image" content="<%= ogImage || `${baseUrl}/images/placeholder-cover.jpg` %>" />
+
+  <link rel="canonical" href="<%= canonicalUrl %>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -46,6 +53,36 @@
         url("<%= settings.heroBackground || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop' %>") center/cover fixed no-repeat;
     }
   </style>
+
+  <script type="application/ld+json">
+    <%- JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: settings.siteName || "Live Promo Center",
+      url: baseUrl,
+      description: settings.seoDescription || settings.siteDescription || "Halaman promo dan katalog game modern"
+    }) %>
+  </script>
+
+  <% if (games && games.length) { %>
+  <script type="application/ld+json">
+    <%- JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: currentProvider ? `Daftar game ${currentProvider.name}` : "Daftar game dan promo",
+      itemListElement: games
+        .filter(game => game.isActive !== false)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        .map((game, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: game.title || "Game",
+          image: game.imageUrl ? (/^https?:\/\//i.test(game.imageUrl) ? game.imageUrl : `${baseUrl}${game.imageUrl}`) : undefined,
+          url: game.gameLink || canonicalUrl
+        }))
+    }) %>
+  </script>
+  <% } %>
 </head>
 <body>
   <div class="ambient-blur"></div>
@@ -229,8 +266,14 @@
           </div>
 
           <h1>
-            <%= currentProvider ? `${currentProvider.name} LIVE CATALOG` : "LIVE PROMO & GAME CATALOG" %>
+            <%= currentProvider ? `Katalog Game ${currentProvider.name} Live Update` : `${settings.siteName || "Live Promo Center"} - Katalog Game & Promo Live` %>
           </h1>
+
+          <p class="panel-intro">
+            <%= currentProvider
+              ? `Temukan daftar game, pola, jam bermain, dan update katalog terbaru dari provider ${currentProvider.name} dalam tampilan yang cepat dan nyaman dibuka di handphone maupun desktop.`
+              : (settings.siteDescription || "Temukan katalog game, promo terbaru, informasi provider, dan update live dalam satu halaman yang cepat, rapi, dan mobile friendly.") %>
+          </p>
 
           <div class="panel-meta">
             <span class="meta-chip">
@@ -295,7 +338,7 @@
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <h3>Pola Slot:</h3>
+                        <h2>Pola Slot</h2>
                       </div>
 
                       <% if (game.providerLogoUrl) { %>
@@ -360,10 +403,7 @@
       <% } else { %>
         <div class="empty-state">
           <h3>Belum ada data game</h3>
-          <p>
-            Tambahkan provider dan game dari panel admin
-            <strong>/itsiregar8008</strong> agar katalog tampil di halaman ini.
-          </p>
+          <p>Katalog game masih kosong. Tambahkan data provider dan game dari dashboard admin agar halaman ini langsung terisi.</p>
         </div>
       <% } %>
     </section>
@@ -514,7 +554,7 @@
         gamesGrid.innerHTML = `
           <div class="empty-state" style="grid-column:1 / -1;">
             <h3>Belum ada data game</h3>
-            <p>Tambahkan data game dari panel admin agar katalog tampil di halaman ini.</p>
+            <p>Katalog game masih kosong. Tambahkan data dari dashboard admin agar halaman ini terisi.</p>
           </div>
         `;
         return;
@@ -553,7 +593,7 @@
                       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
-                      <h3>Pola Slot:</h3>
+                      <h2>Pola Slot</h2>
                     </div>
 
                     ${game.providerLogoUrl ? `
