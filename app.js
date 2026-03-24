@@ -1,67 +1,49 @@
 const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
 const session = require("express-session");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
+
 const PORT = Number(process.env.PORT || 3000);
+const APP_BASE_URL = String(
+  process.env.APP_BASE_URL ||
+    process.env.BASE_URL ||
+    `http://localhost:${PORT}`
+).replace(/\/+$/, "");
 
-const ROOT_DIR = __dirname;
-const PUBLIC_DIR = path.join(ROOT_DIR, "public");
+const ADMIN_PATH = process.env.ADMIN_PATH || "itsiregar8008";
+const ADMIN_USERNAME =
+  process.env.ADMIN_USERNAME || process.env.ADMIN_ID || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "123456";
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || "ganti-dengan-session-secret-yang-aman";
 
-const DATA_DIR =
-  process.env.DATA_DIR && String(process.env.DATA_DIR).trim()
-    ? path.resolve(process.env.DATA_DIR)
-    : path.join(ROOT_DIR, "data");
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.join(__dirname, "data");
 
 const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
-const SLIDER_UPLOAD_DIR = path.join(UPLOAD_DIR, "sliders");
-const PROVIDER_UPLOAD_DIR = path.join(UPLOAD_DIR, "providers");
-const GAME_UPLOAD_DIR = path.join(UPLOAD_DIR, "games");
+const FILES = {
+  settings: path.join(DATA_DIR, "settings.json"),
+  sliders: path.join(DATA_DIR, "sliders.json"),
+  providers: path.join(DATA_DIR, "providers.json"),
+  games: path.join(DATA_DIR, "games.json"),
+};
 
-const ADMIN_PATH = "/itsiregar8008";
-
-const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || "").trim();
-const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "").trim();
-const SESSION_SECRET = String(process.env.SESSION_SECRET || "").trim();
-const APP_BASE_URL = String(process.env.APP_BASE_URL || "").replace(/\/+$/, "");
-
-if (!ADMIN_USERNAME) {
-  throw new Error("Missing ADMIN_USERNAME in Railway Variables");
-}
-
-if (!ADMIN_PASSWORD) {
-  throw new Error("Missing ADMIN_PASSWORD in Railway Variables");
-}
-
-if (!SESSION_SECRET) {
-  throw new Error("Missing SESSION_SECRET in Railway Variables");
-}
-
-[
-  DATA_DIR,
-  UPLOAD_DIR,
-  SLIDER_UPLOAD_DIR,
-  PROVIDER_UPLOAD_DIR,
-  GAME_UPLOAD_DIR,
-  PUBLIC_DIR,
-  path.join(ROOT_DIR, "views"),
-  path.join(ROOT_DIR, "views", "admin"),
-  path.join(PUBLIC_DIR, "css"),
-  path.join(PUBLIC_DIR, "js"),
-  path.join(PUBLIC_DIR, "images")
-].forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
+ensureDir(DATA_DIR);
+ensureDir(UPLOAD_DIR);
+ensureJsonFile(FILES.settings, getDefaultSettings());
+ensureJsonFile(FILES.sliders, []);
+ensureJsonFile(FILES.providers, []);
+ensureJsonFile(FILES.games, []);
 
 app.set("view engine", "ejs");
-app.set("views", path.join(ROOT_DIR, "views"));
-app.set("trust proxy", 1);
+app.set("views", path.join(__dirname, "views"));
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-app.use(express.static(PUBLIC_DIR));
-app.use("/uploads", express.static(UPLOAD_DIR));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 app.use(
   session({
@@ -70,574 +52,949 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 12
-    }
+      secure: false,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
   })
 );
 
-function ensureFile(fileName, defaultValue) {
-  const filePath = path.join(DATA_DIR, fileName);
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), "utf8");
-  }
-}
-
-function readJSON(fileName, fallback) {
-  try {
-    const filePath = path.join(DATA_DIR, fileName);
-    if (!fs.existsSync(filePath)) return fallback;
-    const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error(`Gagal baca ${fileName}:`, err.message);
-    return fallback;
-  }
-}
-
-function writeJSON(fileName, data) {
-  const filePath = path.join(DATA_DIR, fileName);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
-}
-
-ensureFile("settings.json", {
-  siteName: "Live Promo Center",
-  siteDescription: "Halaman promo dan katalog game modern",
-  runningText: "Selamat datang di Live Promo Center",
-  heroBackground: "",
-  logoUrl: "",
-  loginButtonLink: "#",
-  daftarButtonLink: "#",
-  promosiButtonLink: "#",
-  contactButtonLink: "#",
-  seoTitle: "Live Promo Center",
-  seoDescription: "Halaman promo dan katalog game modern",
-  seoKeywords: "promo, katalog game, provider game, informasi game"
-});
-
-ensureFile("sliders.json", []);
-ensureFile("providers.json", []);
-ensureFile("games.json", []);
-
-function sanitizeText(value = "") {
-  return String(value).trim();
-}
-
-function makeId(prefix = "id") {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function makeSlug(value = "") {
-  return String(value)
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function randomInt(min, max) {
-  const a = Math.ceil(min);
-  const b = Math.floor(max);
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-function shuffleArray(items = []) {
-  const arr = [...items];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function jakartaNowParts() {
-  const now = new Date();
-
-  const weekday = new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    weekday: "long"
-  }).format(now);
-
-  const datePart = new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  }).format(now);
-
-  const timePart = new Intl.DateTimeFormat("id-ID", {
-    timeZone: "Asia/Jakarta",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
-  }).format(now);
-
-  return {
-    fullDate: `${weekday}, ${datePart}`,
-    fullDateTime: `${weekday}, ${datePart} ${timePart} WIB`,
-    timePart
-  };
-}
-
-function makeFutureTimeRange() {
-  const now = new Date();
-  const jakarta = new Date(
-    now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
-  );
-
-  const startOffsetMinutes = randomInt(10, 240);
-  const durationMinutes = randomInt(45, 360);
-
-  const start = new Date(jakarta.getTime() + startOffsetMinutes * 60000);
-  const end = new Date(start.getTime() + durationMinutes * 60000);
-
-  return `${pad2(start.getHours())}:${pad2(start.getMinutes())} - ${pad2(
-    end.getHours()
-  )}:${pad2(end.getMinutes())}`;
-}
-
-function randomScore() {
-  return randomInt(51, 97);
-}
-
-function scoreClass(score) {
-  if (score >= 80) return "high";
-  if (score >= 60) return "medium";
-  return "low";
-}
-
-function buildPragmaticPattern() {
-  const allowed = [
-    ["❌", "☑️", "☑️"],
-    ["☑️", "❌", "☑️"],
-    ["❌", "❌", "☑️"],
-    ["☑️", "❌", "❌"],
-    ["❌", "☑️", "❌"],
-    ["❌", "❌", "❌"]
-  ];
-
-  const steps = ["Manual 5", "Manual 7", "Manual 9"];
-  const picked = allowed[randomInt(0, allowed.length - 1)];
-
-  return steps.map((step, index) => ({
-    label: step,
-    state1: picked[index],
-    state2: picked[(index + 1) % 3],
-    state3: picked[(index + 2) % 3]
-  }));
-}
-
-function buildDefaultPattern() {
-  const stepPool = [
-    "Auto 10",
-    "Auto 20",
-    "Auto 30",
-    "Manual 3",
-    "Manual 5",
-    "Manual 7",
-    "Manual 9"
-  ];
-
-  const turboPool = ["Turbo On ☑️", "Turbo Off ❌"];
-
-  return Array.from({ length: 3 }).map(() => ({
-    label: stepPool[randomInt(0, stepPool.length - 1)],
-    turbo: turboPool[randomInt(0, turboPool.length - 1)]
-  }));
-}
-
-function withDynamicGameData(game, settings = {}) {
-  const providerName = sanitizeText(game.providerName).toLowerCase();
-  const score = randomScore();
-  const gameLink = sanitizeText(settings.loginButtonLink || "#");
-
-  return {
-    ...game,
-    title: sanitizeText(game.title || game.providerName || "Game"),
-    gameLink,
-    score,
-    scoreClass: scoreClass(score),
-    timeRange: makeFutureTimeRange(),
-    pattern:
-      providerName === "pragmatic play"
-        ? { type: "pragmatic", rows: buildPragmaticPattern() }
-        : { type: "default", rows: buildDefaultPattern() }
-  };
-}
-
-function authRequired(req, res, next) {
-  if (!req.session || !req.session.isAdmin) {
-    return res.redirect(ADMIN_PATH);
-  }
-  next();
-}
+app.use("/uploads", express.static(UPLOAD_DIR));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
-  res.locals.isAdmin = !!(req.session && req.session.isAdmin);
   res.locals.adminPath = ADMIN_PATH;
+  res.locals.isAdmin = !!req.session?.isAdmin;
   next();
 });
 
 const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    const target = sanitizeText(req.body.uploadType || req.query.uploadType || "misc");
-    let dir = UPLOAD_DIR;
-
-    if (target === "slider") dir = SLIDER_UPLOAD_DIR;
-    else if (target === "provider") dir = PROVIDER_UPLOAD_DIR;
-    else if (target === "game") dir = GAME_UPLOAD_DIR;
-
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
+    const safeBase = slugify(
+      path.basename(file.originalname || "file", ext),
+      "file"
+    );
+    cb(null, `${Date.now()}-${safeBase}${ext}`);
   },
-  filename(req, file, cb) {
-    const ext = path.extname(file.originalname || ".jpg").toLowerCase() || ".jpg";
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
-  }
 });
 
 const upload = multer({
   storage,
   limits: {
-    fileSize: 8 * 1024 * 1024
+    fileSize: 50 * 1024 * 1024,
   },
-  fileFilter(req, file, cb) {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("File harus gambar"));
+  fileFilter: (req, file, cb) => {
+    const ok = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".webp",
+      ".gif",
+      ".svg",
+      ".mp4",
+      ".webm",
+      ".ogg",
+      ".mov",
+    ].includes(path.extname(file.originalname || "").toLowerCase());
+
+    if (!ok) {
+      return cb(new Error("Format file tidak didukung."));
     }
+
     cb(null, true);
+  },
+});
+
+function requireAdmin(req, res, next) {
+  if (req.session?.isAdmin) return next();
+  return res.redirect(`/${ADMIN_PATH}/login`);
+}
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function ensureJsonFile(filePath, defaultValue) {
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), "utf8");
   }
+}
+
+function readJson(filePath, fallback) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    const raw = fs.readFileSync(filePath, "utf8");
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function writeJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+}
+
+function getDefaultSettings() {
+  return {
+    siteName: "Live Promo Center",
+    siteDescription: "Halaman promo dan katalog game modern",
+    seoTitle: "Live Promo Center",
+    seoDescription: "Halaman promo dan katalog game modern",
+    seoKeywords: "promo, katalog game, provider game, informasi game",
+    logoUrl: "",
+    heroBackground:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop",
+    runningText: "Selamat datang di Live Promo Center",
+    loginButtonLink: "#",
+    daftarButtonLink: "#",
+    promosiButtonLink: "#",
+    contactButtonLink: "#",
+  };
+}
+
+function slugify(text, fallback = "item") {
+  const value = String(text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "-and-")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+
+  return value || fallback;
+}
+
+function createId(prefix = "id") {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function toBool(value, defaultValue = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const v = value.toLowerCase().trim();
+    if (["true", "1", "yes", "on"].includes(v)) return true;
+    if (["false", "0", "no", "off"].includes(v)) return false;
+  }
+  return defaultValue;
+}
+
+function toNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeText(value = "") {
+  return String(value || "").trim();
+}
+
+function normalizeUpload(reqFile, oldValue = "") {
+  if (!reqFile) return oldValue || "";
+  return `/uploads/${reqFile.filename}`;
+}
+
+function toAbsoluteUrl(url = "") {
+  const value = String(url || "").trim();
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/")) return `${APP_BASE_URL}${value}`;
+  return `${APP_BASE_URL}/${value}`;
+}
+
+function buildCanonicalUrl(req) {
+  return `${APP_BASE_URL}${req.originalUrl === "/" ? "" : req.originalUrl}`;
+}
+
+function uniqueSlug(items, baseSlug, currentId = "") {
+  let slug = slugify(baseSlug, "item");
+  let counter = 2;
+
+  while (
+    items.some(
+      (item) =>
+        String(item.slug || "") === slug && String(item.id || "") !== currentId
+    )
+  ) {
+    slug = `${slugify(baseSlug, "item")}-${counter}`;
+    counter += 1;
+  }
+
+  return slug;
+}
+
+function removeUploadedFile(fileUrl = "") {
+  if (!fileUrl || !fileUrl.startsWith("/uploads/")) return;
+  const target = path.join(UPLOAD_DIR, fileUrl.replace("/uploads/", ""));
+  if (fs.existsSync(target)) {
+    try {
+      fs.unlinkSync(target);
+    } catch (err) {}
+  }
+}
+
+function getJakartaParts() {
+  const now = new Date();
+  const dateOnly = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(now);
+
+  const timeOnly = new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(now);
+
+  return {
+    fullDate: dateOnly,
+    time: timeOnly,
+    fullDateTime: `${dateOnly} ${timeOnly} WIB`,
+    iso: now.toISOString(),
+  };
+}
+
+function normalizePattern(input, providerName = "") {
+  if (!input) return defaultPattern(providerName);
+
+  if (typeof input === "object" && input !== null) {
+    if (Array.isArray(input.rows)) return input;
+    return defaultPattern(providerName);
+  }
+
+  const lines = String(input)
+    .split(/\r?\n/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+  if (!lines.length) return defaultPattern(providerName);
+
+  if (/pragmatic/i.test(providerName)) {
+    return {
+      type: "pragmatic",
+      rows: lines.slice(0, 4).map((line) => ({
+        label: line,
+        state1: "☑️",
+        state2: "☑️",
+        state3: "☑️",
+      })),
+    };
+  }
+
+  return {
+    type: "standard",
+    rows: lines.slice(0, 5).map((line) => ({
+      label: line,
+      turbo: "",
+    })),
+  };
+}
+
+function defaultPattern(providerName = "") {
+  if (/pragmatic/i.test(providerName)) {
+    return {
+      type: "pragmatic",
+      rows: [
+        { label: "Manual 10x", state1: "☑️", state2: "☑️", state3: "❌" },
+        { label: "Auto 30x", state1: "☑️", state2: "❌", state3: "☑️" },
+        { label: "Turbo OFF", state1: "☑️", state2: "☑️", state3: "☑️" },
+      ],
+    };
+  }
+
+  return {
+    type: "standard",
+    rows: [
+      { label: "Auto Spin 20x", turbo: "" },
+      { label: "Naikkan bet perlahan", turbo: "" },
+      { label: "Main saat pola stabil", turbo: "" },
+    ],
+  };
+}
+
+function scoreClass(score) {
+  const n = toNumber(score, 0);
+  if (n >= 80) return "high";
+  if (n >= 60) return "medium";
+  return "low";
+}
+
+function getSettings() {
+  return readJson(FILES.settings, getDefaultSettings());
+}
+
+function getProviders() {
+  return readJson(FILES.providers, []);
+}
+
+function getGames() {
+  return readJson(FILES.games, []);
+}
+
+function getSliders() {
+  return readJson(FILES.sliders, []);
+}
+
+function saveSettings(data) {
+  writeJson(FILES.settings, data);
+}
+
+function saveProviders(data) {
+  writeJson(FILES.providers, data);
+}
+
+function saveGames(data) {
+  writeJson(FILES.games, data);
+}
+
+function saveSliders(data) {
+  writeJson(FILES.sliders, data);
+}
+
+function normalizeProvider(provider = {}) {
+  return {
+    id: provider.id || createId("provider"),
+    name: normalizeText(provider.name),
+    slug: slugify(provider.slug || provider.name, "provider"),
+    logoUrl: normalizeText(provider.logoUrl),
+    isActive:
+      provider.isActive === false ? false : toBool(provider.isActive, true),
+    sortOrder: toNumber(provider.sortOrder, 0),
+    createdAt: provider.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeSlider(slide = {}) {
+  return {
+    id: slide.id || createId("slider"),
+    title: normalizeText(slide.title),
+    subtitle: normalizeText(slide.subtitle),
+    imageUrl: normalizeText(slide.imageUrl),
+    buttonText: normalizeText(slide.buttonText),
+    buttonLink: normalizeText(slide.buttonLink),
+    isActive: slide.isActive === false ? false : toBool(slide.isActive, true),
+    sortOrder: toNumber(slide.sortOrder, 0),
+    createdAt: slide.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeGame(game = {}, providers = []) {
+  const providerId = normalizeText(game.providerId);
+  const provider = providers.find((p) => String(p.id) === providerId) || null;
+  const score = toNumber(game.score || game.winrate, 0);
+
+  return {
+    id: game.id || createId("game"),
+    title: normalizeText(game.title),
+    slug: slugify(game.slug || game.title, "game"),
+    providerId: provider ? provider.id : "",
+    providerName: provider ? provider.name : normalizeText(game.providerName),
+    providerSlug: provider ? provider.slug : normalizeText(game.providerSlug),
+    providerLogoUrl: provider
+      ? provider.logoUrl
+      : normalizeText(game.providerLogoUrl),
+    imageUrl: normalizeText(game.imageUrl),
+    gameLink: normalizeText(game.gameLink),
+    labelBadge: normalizeText(game.labelBadge),
+    timeRange: normalizeText(game.timeRange || game.jam),
+    jam: normalizeText(game.jam || game.timeRange),
+    score,
+    winrate: score,
+    scoreClass: normalizeText(game.scoreClass) || scoreClass(score),
+    pattern: normalizePattern(game.pattern, provider ? provider.name : ""),
+    isActive: game.isActive === false ? false : toBool(game.isActive, true),
+    sortOrder: toNumber(game.sortOrder, 0),
+    createdAt: game.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function buildHomePayload(req, providerSlug = "") {
+  const settings = getSettings();
+  const sliders = getSliders()
+    .map(normalizeSlider)
+    .filter((x) => x.isActive !== false)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const providers = getProviders()
+    .map(normalizeProvider)
+    .filter((x) => x.isActive !== false)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const currentProvider = providerSlug
+    ? providers.find((p) => p.slug === providerSlug) || null
+    : null;
+
+  let games = getGames()
+    .map((game) => normalizeGame(game, providers))
+    .filter((x) => x.isActive !== false);
+
+  if (currentProvider) {
+    games = games.filter((x) => x.providerId === currentProvider.id);
+  }
+
+  games.sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const jakarta = getJakartaParts();
+  const ogImage = toAbsoluteUrl(
+    settings.logoUrl || (sliders[0] && sliders[0].imageUrl) || ""
+  );
+
+  return {
+    settings,
+    sliders,
+    providers,
+    games,
+    currentProvider,
+    jakartaNow: jakarta.fullDateTime,
+    updateLabel: jakarta.fullDate,
+    jakarta,
+    canonicalUrl: buildCanonicalUrl(req),
+    baseUrl: APP_BASE_URL,
+    ogImage,
+  };
+}
+
+/* =========================
+   FRONTEND
+========================= */
+
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    app: "promo-catalog-ejs",
+    time: new Date().toISOString(),
+  });
 });
 
 app.get("/", (req, res) => {
-  const settings = readJSON("settings.json", {});
-  const sliders = readJSON("sliders.json", []);
-  const providers = readJSON("providers.json", []);
-  const games = readJSON("games.json", []);
-  const dateInfo = jakartaNowParts();
-
-  const activeProviders = providers
-    .filter((p) => p.isActive !== false)
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-  const activeGames = shuffleArray(
-    games
-      .filter((g) => g.isActive !== false)
-      .map((g) => withDynamicGameData(g, settings))
-  );
-
-  res.render("home", {
-    settings,
-    sliders: sliders.filter((s) => s.isActive !== false),
-    providers: activeProviders,
-    games: activeGames,
-    updateLabel: dateInfo.fullDate,
-    jakartaNow: dateInfo.fullDateTime,
-    currentProvider: null,
-    baseUrl: APP_BASE_URL
-  });
+  const payload = buildHomePayload(req);
+  return res.render("home", payload);
 });
 
 app.get("/provider/:slug", (req, res) => {
-  const settings = readJSON("settings.json", {});
-  const sliders = readJSON("sliders.json", []);
-  const providers = readJSON("providers.json", []);
-  const games = readJSON("games.json", []);
-  const dateInfo = jakartaNowParts();
-  const slug = sanitizeText(req.params.slug);
-
-  const activeProviders = providers
-    .filter((p) => p.isActive !== false)
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-  const provider = activeProviders.find((p) => p.slug === slug);
-  if (!provider) {
-    return res.status(404).send("Provider tidak ditemukan");
+  const payload = buildHomePayload(req, req.params.slug);
+  if (!payload.currentProvider) {
+    return res.status(404).send("Provider tidak ditemukan.");
   }
-
-  const filteredGames = shuffleArray(
-    games
-      .filter((g) => g.isActive !== false && g.providerSlug === slug)
-      .map((g) => withDynamicGameData(g, settings))
-  );
-
-  res.render("home", {
-    settings,
-    sliders: sliders.filter((s) => s.isActive !== false),
-    providers: activeProviders,
-    games: filteredGames,
-    updateLabel: dateInfo.fullDate,
-    jakartaNow: dateInfo.fullDateTime,
-    currentProvider: provider,
-    baseUrl: APP_BASE_URL
-  });
+  return res.render("home", payload);
 });
 
 app.get("/api/jakarta-time", (req, res) => {
-  res.json(jakartaNowParts());
+  return res.json(getJakartaParts());
 });
 
 app.get("/api/games", (req, res) => {
-  const settings = readJSON("settings.json", {});
-  const providerSlug = sanitizeText(req.query.provider || "");
+  const providerSlug = normalizeText(req.query.provider);
+  const providers = getProviders().map(normalizeProvider);
+  let games = getGames()
+    .map((game) => normalizeGame(game, providers))
+    .filter((x) => x.isActive !== false);
 
-  const games = shuffleArray(
-    readJSON("games.json", [])
-      .filter((g) => g.isActive !== false)
-      .filter((g) => (providerSlug ? g.providerSlug === providerSlug : true))
-      .map((g) => withDynamicGameData(g, settings))
-  );
+  if (providerSlug) {
+    const provider = providers.find((p) => p.slug === providerSlug);
+    if (provider) {
+      games = games.filter((x) => x.providerId === provider.id);
+    } else {
+      games = [];
+    }
+  }
 
-  res.json({
+  games.sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return res.json({
     success: true,
     items: games,
-    jakarta: jakartaNowParts()
+    jakarta: getJakartaParts(),
   });
 });
 
-app.get(ADMIN_PATH, (req, res) => {
-  if (req.session && req.session.isAdmin) {
-    return res.redirect(`${ADMIN_PATH}/dashboard`);
+/* =========================
+   AUTH ADMIN
+========================= */
+
+app.get(`/${ADMIN_PATH}/login`, (req, res) => {
+  if (req.session?.isAdmin) {
+    return res.redirect(`/${ADMIN_PATH}`);
   }
 
-  res.render("admin/login", {
-    error: ""
+  return res.render("admin/login", {
+    title: "Login Admin",
+    error: "",
   });
 });
 
-app.post(ADMIN_PATH, (req, res) => {
-  const username = sanitizeText(req.body.username);
-  const password = sanitizeText(req.body.password);
+app.post(`/${ADMIN_PATH}/login`, (req, res) => {
+  const username = normalizeText(req.body.username);
+  const password = String(req.body.password || "");
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
-    req.session.adminUsername = ADMIN_USERNAME;
-    return res.redirect(`${ADMIN_PATH}/dashboard`);
+    req.session.regenerate((err) => {
+      if (err) {
+        return res.render("admin/login", {
+          title: "Login Admin",
+          error: "Gagal membuat session login.",
+        });
+      }
+
+      req.session.isAdmin = true;
+      req.session.adminUsername = username;
+      return res.redirect(`/${ADMIN_PATH}`);
+    });
+    return;
   }
 
-  return res.status(401).render("admin/login", {
-    error: "Username atau password salah"
+  return res.render("admin/login", {
+    title: "Login Admin",
+    error: "Username atau password salah.",
   });
 });
 
-app.get(`${ADMIN_PATH}/logout`, authRequired, (req, res) => {
+app.post(`/${ADMIN_PATH}/logout`, requireAdmin, (req, res) => {
   req.session.destroy(() => {
-    res.redirect(ADMIN_PATH);
+    res.redirect(`/${ADMIN_PATH}/login`);
   });
 });
 
-app.get(`${ADMIN_PATH}/dashboard`, authRequired, (req, res) => {
-  const sliders = readJSON("sliders.json", []);
-  const providers = readJSON("providers.json", []);
-  const games = readJSON("games.json", []);
-  const settings = readJSON("settings.json", {});
+app.get(`/${ADMIN_PATH}`, requireAdmin, (req, res) => {
+  const providers = getProviders();
+  const games = getGames();
+  const sliders = getSliders();
 
-  res.render("admin/dashboard", {
+  return res.render("admin/dashboard", {
+    title: "Dashboard Admin",
     counts: {
-      sliders: sliders.length,
       providers: providers.length,
-      games: games.length
+      games: games.length,
+      sliders: sliders.length,
     },
-    settings
+    settings: getSettings(),
   });
 });
 
-app.get(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
-  const settings = readJSON("settings.json", {});
-  res.render("admin/settings", { settings });
-});
+/* =========================
+   SETTINGS
+========================= */
 
-app.post(`${ADMIN_PATH}/settings`, authRequired, (req, res) => {
-  const oldSettings = readJSON("settings.json", {});
-
-  const nextSettings = {
-    ...oldSettings,
-    siteName: sanitizeText(req.body.siteName),
-    siteDescription: sanitizeText(req.body.siteDescription),
-    runningText: sanitizeText(req.body.runningText),
-    heroBackground: sanitizeText(req.body.heroBackground),
-    logoUrl: sanitizeText(req.body.logoUrl),
-    loginButtonLink: sanitizeText(req.body.loginButtonLink),
-    daftarButtonLink: sanitizeText(req.body.daftarButtonLink),
-    promosiButtonLink: sanitizeText(req.body.promosiButtonLink),
-    contactButtonLink: sanitizeText(req.body.contactButtonLink),
-    seoTitle: sanitizeText(req.body.seoTitle),
-    seoDescription: sanitizeText(req.body.seoDescription),
-    seoKeywords: sanitizeText(req.body.seoKeywords)
-  };
-
-  writeJSON("settings.json", nextSettings);
-  res.redirect(`${ADMIN_PATH}/settings`);
-});
-
-app.get(`${ADMIN_PATH}/sliders`, authRequired, (req, res) => {
-  const sliders = readJSON("sliders.json", []);
-  res.render("admin/sliders", { sliders });
+app.get(`/${ADMIN_PATH}/settings`, requireAdmin, (req, res) => {
+  return res.render("admin/settings", {
+    title: "Settings",
+    settings: getSettings(),
+  });
 });
 
 app.post(
-  `${ADMIN_PATH}/sliders`,
-  authRequired,
-  (req, res, next) => {
-    req.body.uploadType = "slider";
-    next();
-  },
-  upload.single("image"),
+  `/${ADMIN_PATH}/settings`,
+  requireAdmin,
+  upload.fields([
+    { name: "logoFile", maxCount: 1 },
+    { name: "heroFile", maxCount: 1 },
+  ]),
   (req, res) => {
-    const sliders = readJSON("sliders.json", []);
+    const current = getSettings();
 
-    const imageUrl = req.file
-      ? `/uploads/sliders/${req.file.filename}`
-      : sanitizeText(req.body.imageUrl);
+    const logoFile = req.files?.logoFile?.[0];
+    const heroFile = req.files?.heroFile?.[0];
 
-    sliders.push({
-      id: makeId("slider"),
-      title: sanitizeText(req.body.title),
-      subtitle: sanitizeText(req.body.subtitle),
-      imageUrl,
-      buttonText: sanitizeText(req.body.buttonText || ""),
-      buttonLink: sanitizeText(req.body.buttonLink || ""),
-      sortOrder: Number(req.body.sortOrder || 0),
-      isActive: req.body.isActive === "on",
-      createdAt: new Date().toISOString()
-    });
+    const next = {
+      ...current,
+      siteName: normalizeText(req.body.siteName) || current.siteName,
+      siteDescription:
+        normalizeText(req.body.siteDescription) || current.siteDescription,
+      seoTitle: normalizeText(req.body.seoTitle) || current.seoTitle,
+      seoDescription:
+        normalizeText(req.body.seoDescription) || current.seoDescription,
+      seoKeywords: normalizeText(req.body.seoKeywords) || current.seoKeywords,
+      runningText: normalizeText(req.body.runningText) || current.runningText,
+      loginButtonLink: normalizeText(req.body.loginButtonLink),
+      daftarButtonLink: normalizeText(req.body.daftarButtonLink),
+      promosiButtonLink: normalizeText(req.body.promosiButtonLink),
+      contactButtonLink: normalizeText(req.body.contactButtonLink),
+      logoUrl:
+        normalizeText(req.body.logoUrl) ||
+        normalizeUpload(logoFile, current.logoUrl),
+      heroBackground:
+        normalizeText(req.body.heroBackground) ||
+        normalizeUpload(heroFile, current.heroBackground),
+    };
 
-    writeJSON("sliders.json", sliders);
-    res.redirect(`${ADMIN_PATH}/sliders`);
+    saveSettings(next);
+    return res.redirect(`/${ADMIN_PATH}/settings`);
   }
 );
 
-app.post(`${ADMIN_PATH}/sliders/:id/delete`, authRequired, (req, res) => {
-  const sliders = readJSON("sliders.json", []);
-  const id = sanitizeText(req.params.id);
-  const next = sliders.filter((item) => item.id !== id);
-  writeJSON("sliders.json", next);
-  res.redirect(`${ADMIN_PATH}/sliders`);
-});
+/* =========================
+   PROVIDERS
+========================= */
 
-app.get(`${ADMIN_PATH}/providers`, authRequired, (req, res) => {
-  const providers = readJSON("providers.json", []);
-  res.render("admin/providers", { providers });
+app.get(`/${ADMIN_PATH}/providers`, requireAdmin, (req, res) => {
+  const providers = getProviders()
+    .map(normalizeProvider)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return res.render("admin/providers", {
+    title: "Providers",
+    providers,
+  });
 });
 
 app.post(
-  `${ADMIN_PATH}/providers`,
-  authRequired,
-  (req, res, next) => {
-    req.body.uploadType = "provider";
-    next();
-  },
-  upload.single("logo"),
+  `/${ADMIN_PATH}/providers/create`,
+  requireAdmin,
+  upload.single("logoFile"),
   (req, res) => {
-    const providers = readJSON("providers.json", []);
-    const name = sanitizeText(req.body.name);
-    const slug = sanitizeText(req.body.slug) || makeSlug(name);
+    const providers = getProviders().map(normalizeProvider);
+    const name = normalizeText(req.body.name);
 
-    const logoUrl = req.file
-      ? `/uploads/providers/${req.file.filename}`
-      : sanitizeText(req.body.logoUrl);
+    if (!name) {
+      return res.status(400).send("Nama provider wajib diisi.");
+    }
 
-    providers.push({
-      id: makeId("provider"),
+    const provider = normalizeProvider({
+      id: createId("provider"),
       name,
-      slug,
-      logoUrl,
-      sortOrder: Number(req.body.sortOrder || 0),
-      isActive: req.body.isActive === "on",
-      createdAt: new Date().toISOString()
+      slug: uniqueSlug(providers, req.body.slug || name),
+      logoUrl:
+        normalizeText(req.body.logoUrl) || normalizeUpload(req.file, ""),
+      isActive: toBool(req.body.isActive, true),
+      sortOrder: toNumber(req.body.sortOrder, providers.length),
+      createdAt: new Date().toISOString(),
     });
 
-    writeJSON("providers.json", providers);
-    res.redirect(`${ADMIN_PATH}/providers`);
+    providers.push(provider);
+    saveProviders(providers);
+    return res.redirect(`/${ADMIN_PATH}/providers`);
   }
 );
 
-app.post(`${ADMIN_PATH}/providers/:id/delete`, authRequired, (req, res) => {
-  const providers = readJSON("providers.json", []);
-  const games = readJSON("games.json", []);
-  const id = sanitizeText(req.params.id);
+app.post(
+  `/${ADMIN_PATH}/providers/:id/update`,
+  requireAdmin,
+  upload.single("logoFile"),
+  (req, res) => {
+    const providers = getProviders().map(normalizeProvider);
+    const idx = providers.findIndex((x) => x.id === req.params.id);
 
-  const provider = providers.find((p) => p.id === id);
-  const nextProviders = providers.filter((p) => p.id !== id);
-  writeJSON("providers.json", nextProviders);
+    if (idx === -1) {
+      return res.status(404).send("Provider tidak ditemukan.");
+    }
 
-  if (provider) {
-    const nextGames = games.filter((g) => g.providerSlug !== provider.slug);
-    writeJSON("games.json", nextGames);
+    const current = providers[idx];
+    const name = normalizeText(req.body.name) || current.name;
+    const nextLogo =
+      normalizeText(req.body.logoUrl) || normalizeUpload(req.file, current.logoUrl);
+
+    if (req.file && current.logoUrl && current.logoUrl !== nextLogo) {
+      removeUploadedFile(current.logoUrl);
+    }
+
+    providers[idx] = normalizeProvider({
+      ...current,
+      name,
+      slug: uniqueSlug(providers, req.body.slug || name, current.id),
+      logoUrl: nextLogo,
+      isActive: toBool(req.body.isActive, current.isActive),
+      sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+      createdAt: current.createdAt,
+    });
+
+    saveProviders(providers);
+
+    const games = getGames().map((game) => normalizeGame(game, providers));
+    saveGames(games);
+
+    return res.redirect(`/${ADMIN_PATH}/providers`);
+  }
+);
+
+app.post(`/${ADMIN_PATH}/providers/:id/delete`, requireAdmin, (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const target = providers.find((x) => x.id === req.params.id);
+
+  if (!target) {
+    return res.status(404).send("Provider tidak ditemukan.");
   }
 
-  res.redirect(`${ADMIN_PATH}/providers`);
+  if (target.logoUrl) {
+    removeUploadedFile(target.logoUrl);
+  }
+
+  const nextProviders = providers.filter((x) => x.id !== req.params.id);
+  saveProviders(nextProviders);
+
+  const nextGames = getGames()
+    .map((game) => normalizeGame(game, nextProviders))
+    .filter((game) => game.providerId !== target.id);
+
+  saveGames(nextGames);
+
+  return res.redirect(`/${ADMIN_PATH}/providers`);
 });
 
-app.get(`${ADMIN_PATH}/games`, authRequired, (req, res) => {
-  const games = readJSON("games.json", []);
-  const providers = readJSON("providers.json", []);
-  res.render("admin/games", { games, providers });
+/* =========================
+   GAMES
+========================= */
+
+app.get(`/${ADMIN_PATH}/games`, requireAdmin, (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const games = getGames()
+    .map((game) => normalizeGame(game, providers))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return res.render("admin/games", {
+    title: "Games",
+    games,
+    providers,
+  });
 });
 
 app.post(
-  `${ADMIN_PATH}/games`,
-  authRequired,
-  (req, res, next) => {
-    req.body.uploadType = "game";
-    next();
-  },
-  upload.single("image"),
+  `/${ADMIN_PATH}/games/create`,
+  requireAdmin,
+  upload.single("imageFile"),
   (req, res) => {
-    const games = readJSON("games.json", []);
-    const providers = readJSON("providers.json", []);
-    const providerId = sanitizeText(req.body.providerId);
+    const providers = getProviders().map(normalizeProvider);
+    const games = getGames().map((game) => normalizeGame(game, providers));
+
+    const title = normalizeText(req.body.title);
+    const providerId = normalizeText(req.body.providerId);
+
+    if (!title) {
+      return res.status(400).send("Judul game wajib diisi.");
+    }
+
+    const provider = providers.find((p) => p.id === providerId);
+    if (!provider) {
+      return res.status(400).send("Provider game wajib dipilih.");
+    }
+
+    const game = normalizeGame(
+      {
+        id: createId("game"),
+        title,
+        slug: slugify(req.body.slug || title, "game"),
+        providerId: provider.id,
+        providerName: provider.name,
+        providerSlug: provider.slug,
+        providerLogoUrl: provider.logoUrl,
+        imageUrl:
+          normalizeText(req.body.imageUrl) || normalizeUpload(req.file, ""),
+        gameLink: normalizeText(req.body.gameLink),
+        labelBadge: normalizeText(req.body.labelBadge),
+        timeRange: normalizeText(req.body.timeRange),
+        jam: normalizeText(req.body.timeRange),
+        score: toNumber(req.body.score, 0),
+        pattern: normalizeText(req.body.pattern),
+        isActive: toBool(req.body.isActive, true),
+        sortOrder: toNumber(req.body.sortOrder, games.length),
+        createdAt: new Date().toISOString(),
+      },
+      providers
+    );
+
+    games.push(game);
+    saveGames(games);
+    return res.redirect(`/${ADMIN_PATH}/games`);
+  }
+);
+
+app.post(
+  `/${ADMIN_PATH}/games/:id/update`,
+  requireAdmin,
+  upload.single("imageFile"),
+  (req, res) => {
+    const providers = getProviders().map(normalizeProvider);
+    const games = getGames().map((game) => normalizeGame(game, providers));
+    const idx = games.findIndex((x) => x.id === req.params.id);
+
+    if (idx === -1) {
+      return res.status(404).send("Game tidak ditemukan.");
+    }
+
+    const current = games[idx];
+    const providerId = normalizeText(req.body.providerId) || current.providerId;
     const provider = providers.find((p) => p.id === providerId);
 
     if (!provider) {
-      return res.status(400).send("Provider tidak ditemukan");
+      return res.status(400).send("Provider game tidak valid.");
     }
 
-    const imageUrl = req.file
-      ? `/uploads/games/${req.file.filename}`
-      : sanitizeText(req.body.imageUrl);
+    const nextImage =
+      normalizeText(req.body.imageUrl) ||
+      normalizeUpload(req.file, current.imageUrl);
 
-    games.push({
-      id: makeId("game"),
-      title: provider.name,
-      imageUrl,
-      gameLink: "",
-      providerId: provider.id,
-      providerName: provider.name,
-      providerSlug: provider.slug,
-      providerLogoUrl: provider.logoUrl,
-      labelBadge: "HOT",
-      isActive: true,
-      createdAt: new Date().toISOString()
-    });
+    if (req.file && current.imageUrl && current.imageUrl !== nextImage) {
+      removeUploadedFile(current.imageUrl);
+    }
 
-    writeJSON("games.json", games);
-    res.redirect(`${ADMIN_PATH}/games`);
+    games[idx] = normalizeGame(
+      {
+        ...current,
+        title: normalizeText(req.body.title) || current.title,
+        slug: slugify(req.body.slug || req.body.title || current.title, "game"),
+        providerId: provider.id,
+        providerName: provider.name,
+        providerSlug: provider.slug,
+        providerLogoUrl: provider.logoUrl,
+        imageUrl: nextImage,
+        gameLink: normalizeText(req.body.gameLink) || current.gameLink,
+        labelBadge: normalizeText(req.body.labelBadge) || current.labelBadge,
+        timeRange: normalizeText(req.body.timeRange) || current.timeRange,
+        jam: normalizeText(req.body.timeRange) || current.jam,
+        score:
+          req.body.score !== undefined && req.body.score !== ""
+            ? toNumber(req.body.score, current.score)
+            : current.score,
+        pattern: normalizeText(req.body.pattern) || current.pattern,
+        isActive: toBool(req.body.isActive, current.isActive),
+        sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+        createdAt: current.createdAt,
+      },
+      providers
+    );
+
+    saveGames(games);
+    return res.redirect(`/${ADMIN_PATH}/games`);
   }
 );
 
-app.post(`${ADMIN_PATH}/games/:id/delete`, authRequired, (req, res) => {
-  const games = readJSON("games.json", []);
-  const id = sanitizeText(req.params.id);
-  const next = games.filter((g) => g.id !== id);
-  writeJSON("games.json", next);
-  res.redirect(`${ADMIN_PATH}/games`);
+app.post(`/${ADMIN_PATH}/games/:id/delete`, requireAdmin, (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const games = getGames().map((game) => normalizeGame(game, providers));
+  const target = games.find((x) => x.id === req.params.id);
+
+  if (!target) {
+    return res.status(404).send("Game tidak ditemukan.");
+  }
+
+  if (target.imageUrl) {
+    removeUploadedFile(target.imageUrl);
+  }
+
+  saveGames(games.filter((x) => x.id !== req.params.id));
+  return res.redirect(`/${ADMIN_PATH}/games`);
+});
+
+/* =========================
+   SLIDERS
+========================= */
+
+app.get(`/${ADMIN_PATH}/sliders`, requireAdmin, (req, res) => {
+  const sliders = getSliders()
+    .map(normalizeSlider)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  return res.render("admin/sliders", {
+    title: "Sliders",
+    sliders,
+  });
+});
+
+app.post(
+  `/${ADMIN_PATH}/sliders/create`,
+  requireAdmin,
+  upload.single("imageFile"),
+  (req, res) => {
+    const sliders = getSliders().map(normalizeSlider);
+
+    const imageUrl =
+      normalizeText(req.body.imageUrl) || normalizeUpload(req.file, "");
+
+    if (!imageUrl) {
+      return res.status(400).send("Gambar slider wajib diisi.");
+    }
+
+    const slider = normalizeSlider({
+      id: createId("slider"),
+      title: normalizeText(req.body.title),
+      subtitle: normalizeText(req.body.subtitle),
+      imageUrl,
+      buttonText: normalizeText(req.body.buttonText),
+      buttonLink: normalizeText(req.body.buttonLink),
+      isActive: toBool(req.body.isActive, true),
+      sortOrder: toNumber(req.body.sortOrder, sliders.length),
+      createdAt: new Date().toISOString(),
+    });
+
+    sliders.push(slider);
+    saveSliders(sliders);
+    return res.redirect(`/${ADMIN_PATH}/sliders`);
+  }
+);
+
+app.post(
+  `/${ADMIN_PATH}/sliders/:id/update`,
+  requireAdmin,
+  upload.single("imageFile"),
+  (req, res) => {
+    const sliders = getSliders().map(normalizeSlider);
+    const idx = sliders.findIndex((x) => x.id === req.params.id);
+
+    if (idx === -1) {
+      return res.status(404).send("Slider tidak ditemukan.");
+    }
+
+    const current = sliders[idx];
+    const nextImage =
+      normalizeText(req.body.imageUrl) ||
+      normalizeUpload(req.file, current.imageUrl);
+
+    if (req.file && current.imageUrl && current.imageUrl !== nextImage) {
+      removeUploadedFile(current.imageUrl);
+    }
+
+    sliders[idx] = normalizeSlider({
+      ...current,
+      title: normalizeText(req.body.title) || current.title,
+      subtitle: normalizeText(req.body.subtitle) || current.subtitle,
+      imageUrl: nextImage,
+      buttonText: normalizeText(req.body.buttonText) || current.buttonText,
+      buttonLink: normalizeText(req.body.buttonLink) || current.buttonLink,
+      isActive: toBool(req.body.isActive, current.isActive),
+      sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+      createdAt: current.createdAt,
+    });
+
+    saveSliders(sliders);
+    return res.redirect(`/${ADMIN_PATH}/sliders`);
+  }
+);
+
+app.post(`/${ADMIN_PATH}/sliders/:id/delete`, requireAdmin, (req, res) => {
+  const sliders = getSliders().map(normalizeSlider);
+  const target = sliders.find((x) => x.id === req.params.id);
+
+  if (!target) {
+    return res.status(404).send("Slider tidak ditemukan.");
+  }
+
+  if (target.imageUrl) {
+    removeUploadedFile(target.imageUrl);
+  }
+
+  saveSliders(sliders.filter((x) => x.id !== req.params.id));
+  return res.redirect(`/${ADMIN_PATH}/sliders`);
+});
+
+/* =========================
+   ERROR HANDLER
+========================= */
+
+app.use((req, res) => {
+  res.status(404).send("Halaman tidak ditemukan.");
 });
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).send(`Terjadi error: ${err.message}`);
+  res.status(500).send("Terjadi kesalahan pada server.");
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server jalan di port ${PORT}`);
-  console.log(`DATA_DIR: ${DATA_DIR}`);
-  console.log(`UPLOAD_DIR: ${UPLOAD_DIR}`);
-  console.log(`ADMIN_PATH: ${ADMIN_PATH}`);
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
