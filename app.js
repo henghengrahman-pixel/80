@@ -13,12 +13,10 @@ const APP_BASE_URL = String(
     `http://localhost:${PORT}`
 ).replace(/\/+$/, "");
 
-const ADMIN_PATH = process.env.ADMIN_PATH || "itsiregar8008";
-const ADMIN_USERNAME =
-  process.env.ADMIN_USERNAME || process.env.ADMIN_ID || "admin";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "123456";
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || "ganti-dengan-session-secret-yang-aman";
+const ADMIN_PATH = String(process.env.ADMIN_PATH || "itsiregar8008").replace(/^\/+|\/+$/g, "") || "itsiregar8008";
+const ADMIN_USERNAME = String(process.env.ADMIN_USERNAME || process.env.ADMIN_ID || "admin").trim();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "123456");
+const SESSION_SECRET = String(process.env.SESSION_SECRET || "ganti-dengan-session-secret-yang-aman");
 
 const DATA_DIR = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
@@ -44,7 +42,6 @@ app.set("views", path.join(__dirname, "views"));
 
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.json({ limit: "10mb" }));
-
 app.use(
   session({
     secret: SESSION_SECRET,
@@ -65,6 +62,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use((req, res, next) => {
   res.locals.adminPath = ADMIN_PATH;
   res.locals.isAdmin = !!req.session?.isAdmin;
+  res.locals.adminUsername = req.session?.adminUsername || ADMIN_USERNAME;
   next();
 });
 
@@ -72,31 +70,18 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname || "").toLowerCase() || ".jpg";
-    const safeBase = slugify(
-      path.basename(file.originalname || "file", ext),
-      "file"
-    );
+    const safeBase = slugify(path.basename(file.originalname || "file", ext), "file");
     cb(null, `${Date.now()}-${safeBase}${ext}`);
   },
 });
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024,
-  },
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ok = [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".webp",
-      ".gif",
-      ".svg",
-      ".mp4",
-      ".webm",
-      ".ogg",
-      ".mov",
+      ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg",
+      ".mp4", ".webm", ".ogg", ".mov",
     ].includes(path.extname(file.originalname || "").toLowerCase());
 
     if (!ok) {
@@ -210,12 +195,7 @@ function uniqueSlug(items, baseSlug, currentId = "") {
   let slug = slugify(baseSlug, "item");
   let counter = 2;
 
-  while (
-    items.some(
-      (item) =>
-        String(item.slug || "") === slug && String(item.id || "") !== currentId
-    )
-  ) {
+  while (items.some((item) => String(item.slug || "") === slug && String(item.id || "") !== currentId)) {
     slug = `${slugify(baseSlug, "item")}-${counter}`;
     counter += 1;
   }
@@ -287,10 +267,7 @@ function normalizePattern(input, providerName = "") {
 
   return {
     type: "standard",
-    rows: lines.slice(0, 5).map((line) => ({
-      label: line,
-      turbo: "",
-    })),
+    rows: lines.slice(0, 5).map((line) => ({ label: line, turbo: "" })),
   };
 }
 
@@ -323,46 +300,22 @@ function scoreClass(score) {
   return "low";
 }
 
-function getSettings() {
-  return readJson(FILES.settings, getDefaultSettings());
-}
-
-function getProviders() {
-  return readJson(FILES.providers, []);
-}
-
-function getGames() {
-  return readJson(FILES.games, []);
-}
-
-function getSliders() {
-  return readJson(FILES.sliders, []);
-}
-
-function saveSettings(data) {
-  writeJson(FILES.settings, data);
-}
-
-function saveProviders(data) {
-  writeJson(FILES.providers, data);
-}
-
-function saveGames(data) {
-  writeJson(FILES.games, data);
-}
-
-function saveSliders(data) {
-  writeJson(FILES.sliders, data);
-}
+function getSettings() { return readJson(FILES.settings, getDefaultSettings()); }
+function getProviders() { return readJson(FILES.providers, []); }
+function getGames() { return readJson(FILES.games, []); }
+function getSliders() { return readJson(FILES.sliders, []); }
+function saveSettings(data) { writeJson(FILES.settings, data); }
+function saveProviders(data) { writeJson(FILES.providers, data); }
+function saveGames(data) { writeJson(FILES.games, data); }
+function saveSliders(data) { writeJson(FILES.sliders, data); }
 
 function normalizeProvider(provider = {}) {
   return {
     id: provider.id || createId("provider"),
     name: normalizeText(provider.name),
-    slug: slugify(provider.slug || provider.name, "provider"),
+    slug: uniqueSlug([], provider.slug || provider.name || "provider", provider.id || ""),
     logoUrl: normalizeText(provider.logoUrl),
-    isActive:
-      provider.isActive === false ? false : toBool(provider.isActive, true),
+    isActive: provider.isActive === false ? false : toBool(provider.isActive, true),
     sortOrder: toNumber(provider.sortOrder, 0),
     createdAt: provider.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -396,9 +349,7 @@ function normalizeGame(game = {}, providers = []) {
     providerId: provider ? provider.id : "",
     providerName: provider ? provider.name : normalizeText(game.providerName),
     providerSlug: provider ? provider.slug : normalizeText(game.providerSlug),
-    providerLogoUrl: provider
-      ? provider.logoUrl
-      : normalizeText(game.providerLogoUrl),
+    providerLogoUrl: provider ? provider.logoUrl : normalizeText(game.providerLogoUrl),
     imageUrl: normalizeText(game.imageUrl),
     gameLink: normalizeText(game.gameLink),
     labelBadge: normalizeText(game.labelBadge),
@@ -417,34 +368,16 @@ function normalizeGame(game = {}, providers = []) {
 
 function buildHomePayload(req, providerSlug = "") {
   const settings = getSettings();
-  const sliders = getSliders()
-    .map(normalizeSlider)
-    .filter((x) => x.isActive !== false)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const sliders = getSliders().map(normalizeSlider).filter((x) => x.isActive !== false).sort((a, b) => a.sortOrder - b.sortOrder);
+  const providers = getProviders().map(normalizeProvider).filter((x) => x.isActive !== false).sort((a, b) => a.sortOrder - b.sortOrder);
+  const currentProvider = providerSlug ? providers.find((p) => p.slug === providerSlug) || null : null;
 
-  const providers = getProviders()
-    .map(normalizeProvider)
-    .filter((x) => x.isActive !== false)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  const currentProvider = providerSlug
-    ? providers.find((p) => p.slug === providerSlug) || null
-    : null;
-
-  let games = getGames()
-    .map((game) => normalizeGame(game, providers))
-    .filter((x) => x.isActive !== false);
-
-  if (currentProvider) {
-    games = games.filter((x) => x.providerId === currentProvider.id);
-  }
-
+  let games = getGames().map((game) => normalizeGame(game, providers)).filter((x) => x.isActive !== false);
+  if (currentProvider) games = games.filter((x) => x.providerId === currentProvider.id);
   games.sort((a, b) => a.sortOrder - b.sortOrder);
 
   const jakarta = getJakartaParts();
-  const ogImage = toAbsoluteUrl(
-    settings.logoUrl || (sliders[0] && sliders[0].imageUrl) || ""
-  );
+  const ogImage = toAbsoluteUrl(settings.logoUrl || (sliders[0] && sliders[0].imageUrl) || "");
 
   return {
     settings,
@@ -461,73 +394,57 @@ function buildHomePayload(req, providerSlug = "") {
   };
 }
 
-/* =========================
-   FRONTEND
-========================= */
+function renderDashboard(req, res) {
+  const providers = getProviders().map(normalizeProvider);
+  const games = getGames().map((game) => normalizeGame(game, providers));
+  const sliders = getSliders().map(normalizeSlider);
+
+  return res.render("admin/dashboard", {
+    title: "Dashboard Admin",
+    counts: {
+      providers: providers.length,
+      games: games.length,
+      sliders: sliders.length,
+      activeProviders: providers.filter((x) => x.isActive !== false).length,
+      activeGames: games.filter((x) => x.isActive !== false).length,
+      activeSliders: sliders.filter((x) => x.isActive !== false).length,
+    },
+    latestProviders: providers.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 5),
+    latestGames: games.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 5),
+    latestSliders: sliders.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 5),
+    settings: getSettings(),
+  });
+}
 
 app.get("/health", (req, res) => {
-  res.json({
-    ok: true,
-    app: "promo-catalog-ejs",
-    time: new Date().toISOString(),
-  });
+  res.json({ ok: true, app: "promo-catalog-ejs", time: new Date().toISOString() });
 });
 
-app.get("/", (req, res) => {
-  const payload = buildHomePayload(req);
-  return res.render("home", payload);
-});
-
+app.get("/", (req, res) => res.render("home", buildHomePayload(req)));
 app.get("/provider/:slug", (req, res) => {
   const payload = buildHomePayload(req, req.params.slug);
-  if (!payload.currentProvider) {
-    return res.status(404).send("Provider tidak ditemukan.");
-  }
+  if (!payload.currentProvider) return res.status(404).send("Provider tidak ditemukan.");
   return res.render("home", payload);
 });
 
-app.get("/api/jakarta-time", (req, res) => {
-  return res.json(getJakartaParts());
-});
-
+app.get("/api/jakarta-time", (req, res) => res.json(getJakartaParts()));
 app.get("/api/games", (req, res) => {
   const providerSlug = normalizeText(req.query.provider);
   const providers = getProviders().map(normalizeProvider);
-  let games = getGames()
-    .map((game) => normalizeGame(game, providers))
-    .filter((x) => x.isActive !== false);
+  let games = getGames().map((game) => normalizeGame(game, providers)).filter((x) => x.isActive !== false);
 
   if (providerSlug) {
     const provider = providers.find((p) => p.slug === providerSlug);
-    if (provider) {
-      games = games.filter((x) => x.providerId === provider.id);
-    } else {
-      games = [];
-    }
+    games = provider ? games.filter((x) => x.providerId === provider.id) : [];
   }
 
   games.sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return res.json({
-    success: true,
-    items: games,
-    jakarta: getJakartaParts(),
-  });
+  return res.json({ success: true, items: games, jakarta: getJakartaParts() });
 });
 
-/* =========================
-   AUTH ADMIN
-========================= */
-
 app.get(`/${ADMIN_PATH}/login`, (req, res) => {
-  if (req.session?.isAdmin) {
-    return res.redirect(`/${ADMIN_PATH}`);
-  }
-
-  return res.render("admin/login", {
-    title: "Login Admin",
-    error: "",
-  });
+  if (req.session?.isAdmin) return res.redirect(`/${ADMIN_PATH}/dashboard`);
+  return res.render("admin/login", { title: "Login Admin", error: "" });
 });
 
 app.post(`/${ADMIN_PATH}/login`, (req, res) => {
@@ -537,454 +454,274 @@ app.post(`/${ADMIN_PATH}/login`, (req, res) => {
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.regenerate((err) => {
       if (err) {
-        return res.render("admin/login", {
-          title: "Login Admin",
-          error: "Gagal membuat session login.",
-        });
+        return res.render("admin/login", { title: "Login Admin", error: "Gagal membuat session login." });
       }
-
       req.session.isAdmin = true;
       req.session.adminUsername = username;
-      return res.redirect(`/${ADMIN_PATH}`);
+      return res.redirect(`/${ADMIN_PATH}/dashboard`);
     });
     return;
   }
 
-  return res.render("admin/login", {
-    title: "Login Admin",
-    error: "Username atau password salah.",
-  });
+  return res.render("admin/login", { title: "Login Admin", error: "Username atau password salah." });
 });
 
-app.post(`/${ADMIN_PATH}/logout`, requireAdmin, (req, res) => {
-  req.session.destroy(() => {
-    res.redirect(`/${ADMIN_PATH}/login`);
-  });
-});
+function doLogout(req, res) {
+  req.session.destroy(() => res.redirect(`/${ADMIN_PATH}/login`));
+}
+app.post(`/${ADMIN_PATH}/logout`, requireAdmin, doLogout);
+app.get(`/${ADMIN_PATH}/logout`, requireAdmin, doLogout);
 
-app.get(`/${ADMIN_PATH}`, requireAdmin, (req, res) => {
-  const providers = getProviders();
-  const games = getGames();
-  const sliders = getSliders();
-
-  return res.render("admin/dashboard", {
-    title: "Dashboard Admin",
-    counts: {
-      providers: providers.length,
-      games: games.length,
-      sliders: sliders.length,
-    },
-    settings: getSettings(),
-  });
-});
-
-/* =========================
-   SETTINGS
-========================= */
+app.get(`/${ADMIN_PATH}`, requireAdmin, renderDashboard);
+app.get(`/${ADMIN_PATH}/dashboard`, requireAdmin, renderDashboard);
 
 app.get(`/${ADMIN_PATH}/settings`, requireAdmin, (req, res) => {
-  return res.render("admin/settings", {
-    title: "Settings",
-    settings: getSettings(),
-  });
+  return res.render("admin/settings", { title: "Settings", settings: getSettings() });
 });
 
-app.post(
-  `/${ADMIN_PATH}/settings`,
-  requireAdmin,
-  upload.fields([
-    { name: "logoFile", maxCount: 1 },
-    { name: "heroFile", maxCount: 1 },
-  ]),
-  (req, res) => {
-    const current = getSettings();
+app.post(`/${ADMIN_PATH}/settings`, requireAdmin, upload.fields([{ name: "logoFile", maxCount: 1 }, { name: "heroFile", maxCount: 1 }]), (req, res) => {
+  const current = getSettings();
+  const logoFile = req.files?.logoFile?.[0];
+  const heroFile = req.files?.heroFile?.[0];
 
-    const logoFile = req.files?.logoFile?.[0];
-    const heroFile = req.files?.heroFile?.[0];
+  const next = {
+    ...current,
+    siteName: normalizeText(req.body.siteName) || current.siteName,
+    siteDescription: normalizeText(req.body.siteDescription) || current.siteDescription,
+    seoTitle: normalizeText(req.body.seoTitle) || current.seoTitle,
+    seoDescription: normalizeText(req.body.seoDescription) || current.seoDescription,
+    seoKeywords: normalizeText(req.body.seoKeywords) || current.seoKeywords,
+    runningText: normalizeText(req.body.runningText) || current.runningText,
+    loginButtonLink: normalizeText(req.body.loginButtonLink),
+    daftarButtonLink: normalizeText(req.body.daftarButtonLink),
+    promosiButtonLink: normalizeText(req.body.promosiButtonLink),
+    contactButtonLink: normalizeText(req.body.contactButtonLink),
+    logoUrl: normalizeText(req.body.logoUrl) || normalizeUpload(logoFile, current.logoUrl),
+    heroBackground: normalizeText(req.body.heroBackground) || normalizeUpload(heroFile, current.heroBackground),
+  };
 
-    const next = {
-      ...current,
-      siteName: normalizeText(req.body.siteName) || current.siteName,
-      siteDescription:
-        normalizeText(req.body.siteDescription) || current.siteDescription,
-      seoTitle: normalizeText(req.body.seoTitle) || current.seoTitle,
-      seoDescription:
-        normalizeText(req.body.seoDescription) || current.seoDescription,
-      seoKeywords: normalizeText(req.body.seoKeywords) || current.seoKeywords,
-      runningText: normalizeText(req.body.runningText) || current.runningText,
-      loginButtonLink: normalizeText(req.body.loginButtonLink),
-      daftarButtonLink: normalizeText(req.body.daftarButtonLink),
-      promosiButtonLink: normalizeText(req.body.promosiButtonLink),
-      contactButtonLink: normalizeText(req.body.contactButtonLink),
-      logoUrl:
-        normalizeText(req.body.logoUrl) ||
-        normalizeUpload(logoFile, current.logoUrl),
-      heroBackground:
-        normalizeText(req.body.heroBackground) ||
-        normalizeUpload(heroFile, current.heroBackground),
-    };
-
-    saveSettings(next);
-    return res.redirect(`/${ADMIN_PATH}/settings`);
-  }
-);
-
-/* =========================
-   PROVIDERS
-========================= */
+  saveSettings(next);
+  return res.redirect(`/${ADMIN_PATH}/settings`);
+});
 
 app.get(`/${ADMIN_PATH}/providers`, requireAdmin, (req, res) => {
-  const providers = getProviders()
-    .map(normalizeProvider)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return res.render("admin/providers", {
-    title: "Providers",
-    providers,
-  });
+  const providers = getProviders().map(normalizeProvider).sort((a, b) => a.sortOrder - b.sortOrder);
+  return res.render("admin/providers", { title: "Providers", providers });
 });
 
-app.post(
-  `/${ADMIN_PATH}/providers/create`,
-  requireAdmin,
-  upload.single("logoFile"),
-  (req, res) => {
-    const providers = getProviders().map(normalizeProvider);
-    const name = normalizeText(req.body.name);
+app.post(`/${ADMIN_PATH}/providers/create`, requireAdmin, upload.single("logoFile"), (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const name = normalizeText(req.body.name);
+  if (!name) return res.status(400).send("Nama provider wajib diisi.");
 
-    if (!name) {
-      return res.status(400).send("Nama provider wajib diisi.");
-    }
+  const provider = normalizeProvider({
+    id: createId("provider"),
+    name,
+    slug: uniqueSlug(providers, req.body.slug || name),
+    logoUrl: normalizeText(req.body.logoUrl) || normalizeUpload(req.file, ""),
+    isActive: toBool(req.body.isActive, true),
+    sortOrder: toNumber(req.body.sortOrder, providers.length),
+    createdAt: new Date().toISOString(),
+  });
 
-    const provider = normalizeProvider({
-      id: createId("provider"),
-      name,
-      slug: uniqueSlug(providers, req.body.slug || name),
-      logoUrl:
-        normalizeText(req.body.logoUrl) || normalizeUpload(req.file, ""),
-      isActive: toBool(req.body.isActive, true),
-      sortOrder: toNumber(req.body.sortOrder, providers.length),
-      createdAt: new Date().toISOString(),
-    });
+  providers.push(provider);
+  saveProviders(providers);
+  return res.redirect(`/${ADMIN_PATH}/providers`);
+});
 
-    providers.push(provider);
-    saveProviders(providers);
-    return res.redirect(`/${ADMIN_PATH}/providers`);
-  }
-);
+app.post(`/${ADMIN_PATH}/providers/:id/update`, requireAdmin, upload.single("logoFile"), (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const idx = providers.findIndex((x) => x.id === req.params.id);
+  if (idx === -1) return res.status(404).send("Provider tidak ditemukan.");
 
-app.post(
-  `/${ADMIN_PATH}/providers/:id/update`,
-  requireAdmin,
-  upload.single("logoFile"),
-  (req, res) => {
-    const providers = getProviders().map(normalizeProvider);
-    const idx = providers.findIndex((x) => x.id === req.params.id);
+  const current = providers[idx];
+  const name = normalizeText(req.body.name) || current.name;
+  const nextLogo = normalizeText(req.body.logoUrl) || normalizeUpload(req.file, current.logoUrl);
 
-    if (idx === -1) {
-      return res.status(404).send("Provider tidak ditemukan.");
-    }
+  if (req.file && current.logoUrl && current.logoUrl !== nextLogo) removeUploadedFile(current.logoUrl);
 
-    const current = providers[idx];
-    const name = normalizeText(req.body.name) || current.name;
-    const nextLogo =
-      normalizeText(req.body.logoUrl) || normalizeUpload(req.file, current.logoUrl);
+  providers[idx] = normalizeProvider({
+    ...current,
+    name,
+    slug: uniqueSlug(providers, req.body.slug || name, current.id),
+    logoUrl: nextLogo,
+    isActive: toBool(req.body.isActive, current.isActive),
+    sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+    createdAt: current.createdAt,
+  });
 
-    if (req.file && current.logoUrl && current.logoUrl !== nextLogo) {
-      removeUploadedFile(current.logoUrl);
-    }
-
-    providers[idx] = normalizeProvider({
-      ...current,
-      name,
-      slug: uniqueSlug(providers, req.body.slug || name, current.id),
-      logoUrl: nextLogo,
-      isActive: toBool(req.body.isActive, current.isActive),
-      sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
-      createdAt: current.createdAt,
-    });
-
-    saveProviders(providers);
-
-    const games = getGames().map((game) => normalizeGame(game, providers));
-    saveGames(games);
-
-    return res.redirect(`/${ADMIN_PATH}/providers`);
-  }
-);
+  saveProviders(providers);
+  const games = getGames().map((game) => normalizeGame(game, providers));
+  saveGames(games);
+  return res.redirect(`/${ADMIN_PATH}/providers`);
+});
 
 app.post(`/${ADMIN_PATH}/providers/:id/delete`, requireAdmin, (req, res) => {
   const providers = getProviders().map(normalizeProvider);
   const target = providers.find((x) => x.id === req.params.id);
+  if (!target) return res.status(404).send("Provider tidak ditemukan.");
 
-  if (!target) {
-    return res.status(404).send("Provider tidak ditemukan.");
-  }
-
-  if (target.logoUrl) {
-    removeUploadedFile(target.logoUrl);
-  }
-
+  if (target.logoUrl) removeUploadedFile(target.logoUrl);
   const nextProviders = providers.filter((x) => x.id !== req.params.id);
   saveProviders(nextProviders);
 
-  const nextGames = getGames()
-    .map((game) => normalizeGame(game, nextProviders))
-    .filter((game) => game.providerId !== target.id);
-
+  const nextGames = getGames().map((game) => normalizeGame(game, nextProviders)).filter((game) => game.providerId !== target.id);
   saveGames(nextGames);
-
   return res.redirect(`/${ADMIN_PATH}/providers`);
 });
 
-/* =========================
-   GAMES
-========================= */
-
 app.get(`/${ADMIN_PATH}/games`, requireAdmin, (req, res) => {
   const providers = getProviders().map(normalizeProvider);
-  const games = getGames()
-    .map((game) => normalizeGame(game, providers))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return res.render("admin/games", {
-    title: "Games",
-    games,
-    providers,
-  });
+  const games = getGames().map((game) => normalizeGame(game, providers)).sort((a, b) => a.sortOrder - b.sortOrder);
+  return res.render("admin/games", { title: "Games", games, providers, settings: getSettings() });
 });
 
-app.post(
-  `/${ADMIN_PATH}/games/create`,
-  requireAdmin,
-  upload.single("imageFile"),
-  (req, res) => {
-    const providers = getProviders().map(normalizeProvider);
-    const games = getGames().map((game) => normalizeGame(game, providers));
+const createGameHandler = (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const games = getGames().map((game) => normalizeGame(game, providers));
+  const title = normalizeText(req.body.title);
+  const providerId = normalizeText(req.body.providerId);
+  const provider = providers.find((p) => p.id === providerId);
+  if (!title) return res.status(400).send("Judul game wajib diisi.");
+  if (!provider) return res.status(400).send("Provider game wajib dipilih.");
 
-    const title = normalizeText(req.body.title);
-    const providerId = normalizeText(req.body.providerId);
+  const game = normalizeGame({
+    id: createId("game"),
+    title,
+    slug: slugify(req.body.slug || title, "game"),
+    providerId: provider.id,
+    providerName: provider.name,
+    providerSlug: provider.slug,
+    providerLogoUrl: provider.logoUrl,
+    imageUrl: normalizeText(req.body.imageUrl) || normalizeUpload(req.file, ""),
+    gameLink: normalizeText(req.body.gameLink),
+    labelBadge: normalizeText(req.body.labelBadge),
+    timeRange: normalizeText(req.body.timeRange),
+    jam: normalizeText(req.body.timeRange),
+    score: toNumber(req.body.score, 0),
+    pattern: normalizeText(req.body.pattern),
+    isActive: toBool(req.body.isActive, true),
+    sortOrder: toNumber(req.body.sortOrder, games.length),
+    createdAt: new Date().toISOString(),
+  }, providers);
 
-    if (!title) {
-      return res.status(400).send("Judul game wajib diisi.");
-    }
+  games.push(game);
+  saveGames(games);
+  return res.redirect(`/${ADMIN_PATH}/games`);
+};
+app.post(`/${ADMIN_PATH}/games`, requireAdmin, upload.single("imageFile"), createGameHandler);
+app.post(`/${ADMIN_PATH}/games/create`, requireAdmin, upload.single("imageFile"), createGameHandler);
 
-    const provider = providers.find((p) => p.id === providerId);
-    if (!provider) {
-      return res.status(400).send("Provider game wajib dipilih.");
-    }
+app.post(`/${ADMIN_PATH}/games/:id/update`, requireAdmin, upload.single("imageFile"), (req, res) => {
+  const providers = getProviders().map(normalizeProvider);
+  const games = getGames().map((game) => normalizeGame(game, providers));
+  const idx = games.findIndex((x) => x.id === req.params.id);
+  if (idx === -1) return res.status(404).send("Game tidak ditemukan.");
 
-    const game = normalizeGame(
-      {
-        id: createId("game"),
-        title,
-        slug: slugify(req.body.slug || title, "game"),
-        providerId: provider.id,
-        providerName: provider.name,
-        providerSlug: provider.slug,
-        providerLogoUrl: provider.logoUrl,
-        imageUrl:
-          normalizeText(req.body.imageUrl) || normalizeUpload(req.file, ""),
-        gameLink: normalizeText(req.body.gameLink),
-        labelBadge: normalizeText(req.body.labelBadge),
-        timeRange: normalizeText(req.body.timeRange),
-        jam: normalizeText(req.body.timeRange),
-        score: toNumber(req.body.score, 0),
-        pattern: normalizeText(req.body.pattern),
-        isActive: toBool(req.body.isActive, true),
-        sortOrder: toNumber(req.body.sortOrder, games.length),
-        createdAt: new Date().toISOString(),
-      },
-      providers
-    );
+  const current = games[idx];
+  const providerId = normalizeText(req.body.providerId) || current.providerId;
+  const provider = providers.find((p) => p.id === providerId);
+  if (!provider) return res.status(400).send("Provider game tidak valid.");
 
-    games.push(game);
-    saveGames(games);
-    return res.redirect(`/${ADMIN_PATH}/games`);
-  }
-);
+  const nextImage = normalizeText(req.body.imageUrl) || normalizeUpload(req.file, current.imageUrl);
+  if (req.file && current.imageUrl && current.imageUrl !== nextImage) removeUploadedFile(current.imageUrl);
 
-app.post(
-  `/${ADMIN_PATH}/games/:id/update`,
-  requireAdmin,
-  upload.single("imageFile"),
-  (req, res) => {
-    const providers = getProviders().map(normalizeProvider);
-    const games = getGames().map((game) => normalizeGame(game, providers));
-    const idx = games.findIndex((x) => x.id === req.params.id);
+  games[idx] = normalizeGame({
+    ...current,
+    title: normalizeText(req.body.title) || current.title,
+    slug: slugify(req.body.slug || req.body.title || current.title, "game"),
+    providerId: provider.id,
+    providerName: provider.name,
+    providerSlug: provider.slug,
+    providerLogoUrl: provider.logoUrl,
+    imageUrl: nextImage,
+    gameLink: normalizeText(req.body.gameLink) || current.gameLink,
+    labelBadge: normalizeText(req.body.labelBadge) || current.labelBadge,
+    timeRange: normalizeText(req.body.timeRange) || current.timeRange,
+    jam: normalizeText(req.body.timeRange) || current.jam,
+    score: req.body.score !== undefined && req.body.score !== "" ? toNumber(req.body.score, current.score) : current.score,
+    pattern: normalizeText(req.body.pattern) || current.pattern,
+    isActive: toBool(req.body.isActive, current.isActive),
+    sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+    createdAt: current.createdAt,
+  }, providers);
 
-    if (idx === -1) {
-      return res.status(404).send("Game tidak ditemukan.");
-    }
-
-    const current = games[idx];
-    const providerId = normalizeText(req.body.providerId) || current.providerId;
-    const provider = providers.find((p) => p.id === providerId);
-
-    if (!provider) {
-      return res.status(400).send("Provider game tidak valid.");
-    }
-
-    const nextImage =
-      normalizeText(req.body.imageUrl) ||
-      normalizeUpload(req.file, current.imageUrl);
-
-    if (req.file && current.imageUrl && current.imageUrl !== nextImage) {
-      removeUploadedFile(current.imageUrl);
-    }
-
-    games[idx] = normalizeGame(
-      {
-        ...current,
-        title: normalizeText(req.body.title) || current.title,
-        slug: slugify(req.body.slug || req.body.title || current.title, "game"),
-        providerId: provider.id,
-        providerName: provider.name,
-        providerSlug: provider.slug,
-        providerLogoUrl: provider.logoUrl,
-        imageUrl: nextImage,
-        gameLink: normalizeText(req.body.gameLink) || current.gameLink,
-        labelBadge: normalizeText(req.body.labelBadge) || current.labelBadge,
-        timeRange: normalizeText(req.body.timeRange) || current.timeRange,
-        jam: normalizeText(req.body.timeRange) || current.jam,
-        score:
-          req.body.score !== undefined && req.body.score !== ""
-            ? toNumber(req.body.score, current.score)
-            : current.score,
-        pattern: normalizeText(req.body.pattern) || current.pattern,
-        isActive: toBool(req.body.isActive, current.isActive),
-        sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
-        createdAt: current.createdAt,
-      },
-      providers
-    );
-
-    saveGames(games);
-    return res.redirect(`/${ADMIN_PATH}/games`);
-  }
-);
+  saveGames(games);
+  return res.redirect(`/${ADMIN_PATH}/games`);
+});
 
 app.post(`/${ADMIN_PATH}/games/:id/delete`, requireAdmin, (req, res) => {
   const providers = getProviders().map(normalizeProvider);
   const games = getGames().map((game) => normalizeGame(game, providers));
   const target = games.find((x) => x.id === req.params.id);
-
-  if (!target) {
-    return res.status(404).send("Game tidak ditemukan.");
-  }
-
-  if (target.imageUrl) {
-    removeUploadedFile(target.imageUrl);
-  }
-
+  if (!target) return res.status(404).send("Game tidak ditemukan.");
+  if (target.imageUrl) removeUploadedFile(target.imageUrl);
   saveGames(games.filter((x) => x.id !== req.params.id));
   return res.redirect(`/${ADMIN_PATH}/games`);
 });
 
-/* =========================
-   SLIDERS
-========================= */
-
 app.get(`/${ADMIN_PATH}/sliders`, requireAdmin, (req, res) => {
-  const sliders = getSliders()
-    .map(normalizeSlider)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  return res.render("admin/sliders", {
-    title: "Sliders",
-    sliders,
-  });
+  const sliders = getSliders().map(normalizeSlider).sort((a, b) => a.sortOrder - b.sortOrder);
+  return res.render("admin/sliders", { title: "Sliders", sliders });
 });
 
-app.post(
-  `/${ADMIN_PATH}/sliders/create`,
-  requireAdmin,
-  upload.single("imageFile"),
-  (req, res) => {
-    const sliders = getSliders().map(normalizeSlider);
+const createSliderHandler = (req, res) => {
+  const sliders = getSliders().map(normalizeSlider);
+  const imageUrl = normalizeText(req.body.imageUrl) || normalizeUpload(req.file, "");
+  if (!imageUrl) return res.status(400).send("Gambar slider wajib diisi.");
 
-    const imageUrl =
-      normalizeText(req.body.imageUrl) || normalizeUpload(req.file, "");
+  const slider = normalizeSlider({
+    id: createId("slider"),
+    title: normalizeText(req.body.title),
+    subtitle: normalizeText(req.body.subtitle),
+    imageUrl,
+    buttonText: normalizeText(req.body.buttonText),
+    buttonLink: normalizeText(req.body.buttonLink),
+    isActive: toBool(req.body.isActive, true),
+    sortOrder: toNumber(req.body.sortOrder, sliders.length),
+    createdAt: new Date().toISOString(),
+  });
 
-    if (!imageUrl) {
-      return res.status(400).send("Gambar slider wajib diisi.");
-    }
+  sliders.push(slider);
+  saveSliders(sliders);
+  return res.redirect(`/${ADMIN_PATH}/sliders`);
+};
+app.post(`/${ADMIN_PATH}/sliders`, requireAdmin, upload.single("imageFile"), createSliderHandler);
+app.post(`/${ADMIN_PATH}/sliders/create`, requireAdmin, upload.single("imageFile"), createSliderHandler);
 
-    const slider = normalizeSlider({
-      id: createId("slider"),
-      title: normalizeText(req.body.title),
-      subtitle: normalizeText(req.body.subtitle),
-      imageUrl,
-      buttonText: normalizeText(req.body.buttonText),
-      buttonLink: normalizeText(req.body.buttonLink),
-      isActive: toBool(req.body.isActive, true),
-      sortOrder: toNumber(req.body.sortOrder, sliders.length),
-      createdAt: new Date().toISOString(),
-    });
+app.post(`/${ADMIN_PATH}/sliders/:id/update`, requireAdmin, upload.single("imageFile"), (req, res) => {
+  const sliders = getSliders().map(normalizeSlider);
+  const idx = sliders.findIndex((x) => x.id === req.params.id);
+  if (idx === -1) return res.status(404).send("Slider tidak ditemukan.");
 
-    sliders.push(slider);
-    saveSliders(sliders);
-    return res.redirect(`/${ADMIN_PATH}/sliders`);
-  }
-);
+  const current = sliders[idx];
+  const nextImage = normalizeText(req.body.imageUrl) || normalizeUpload(req.file, current.imageUrl);
+  if (req.file && current.imageUrl && current.imageUrl !== nextImage) removeUploadedFile(current.imageUrl);
 
-app.post(
-  `/${ADMIN_PATH}/sliders/:id/update`,
-  requireAdmin,
-  upload.single("imageFile"),
-  (req, res) => {
-    const sliders = getSliders().map(normalizeSlider);
-    const idx = sliders.findIndex((x) => x.id === req.params.id);
+  sliders[idx] = normalizeSlider({
+    ...current,
+    title: normalizeText(req.body.title) || current.title,
+    subtitle: normalizeText(req.body.subtitle) || current.subtitle,
+    imageUrl: nextImage,
+    buttonText: normalizeText(req.body.buttonText) || current.buttonText,
+    buttonLink: normalizeText(req.body.buttonLink) || current.buttonLink,
+    isActive: toBool(req.body.isActive, current.isActive),
+    sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
+    createdAt: current.createdAt,
+  });
 
-    if (idx === -1) {
-      return res.status(404).send("Slider tidak ditemukan.");
-    }
-
-    const current = sliders[idx];
-    const nextImage =
-      normalizeText(req.body.imageUrl) ||
-      normalizeUpload(req.file, current.imageUrl);
-
-    if (req.file && current.imageUrl && current.imageUrl !== nextImage) {
-      removeUploadedFile(current.imageUrl);
-    }
-
-    sliders[idx] = normalizeSlider({
-      ...current,
-      title: normalizeText(req.body.title) || current.title,
-      subtitle: normalizeText(req.body.subtitle) || current.subtitle,
-      imageUrl: nextImage,
-      buttonText: normalizeText(req.body.buttonText) || current.buttonText,
-      buttonLink: normalizeText(req.body.buttonLink) || current.buttonLink,
-      isActive: toBool(req.body.isActive, current.isActive),
-      sortOrder: toNumber(req.body.sortOrder, current.sortOrder),
-      createdAt: current.createdAt,
-    });
-
-    saveSliders(sliders);
-    return res.redirect(`/${ADMIN_PATH}/sliders`);
-  }
-);
+  saveSliders(sliders);
+  return res.redirect(`/${ADMIN_PATH}/sliders`);
+});
 
 app.post(`/${ADMIN_PATH}/sliders/:id/delete`, requireAdmin, (req, res) => {
   const sliders = getSliders().map(normalizeSlider);
   const target = sliders.find((x) => x.id === req.params.id);
-
-  if (!target) {
-    return res.status(404).send("Slider tidak ditemukan.");
-  }
-
-  if (target.imageUrl) {
-    removeUploadedFile(target.imageUrl);
-  }
-
+  if (!target) return res.status(404).send("Slider tidak ditemukan.");
+  if (target.imageUrl) removeUploadedFile(target.imageUrl);
   saveSliders(sliders.filter((x) => x.id !== req.params.id));
   return res.redirect(`/${ADMIN_PATH}/sliders`);
 });
-
-/* =========================
-   ERROR HANDLER
-========================= */
 
 app.use((req, res) => {
   res.status(404).send("Halaman tidak ditemukan.");
