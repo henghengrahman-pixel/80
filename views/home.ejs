@@ -320,7 +320,7 @@
                     />
 
                     <a
-                      href="<%= game.gameLink || '#' %>"
+                      href="<%= settings.loginButtonLink || game.gameLink || '#' %>"
                       class="game-overlay-link"
                       target="_blank"
                       rel="nofollow noopener"
@@ -356,7 +356,7 @@
                     <div class="pattern-table">
                       <% if (game.pattern && game.pattern.type === "pragmatic") { %>
                         <% game.pattern.rows.forEach((row) => { %>
-                          <div class="pattern-row">
+                          <div class="pattern-row pragmatic-row">
                             <div class="pattern-label"><%= row.label %></div>
                             <div class="pattern-icons">
                               <span class="state-badge <%= row.state1 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state1 %></span>
@@ -367,8 +367,12 @@
                         <% }) %>
                       <% } else if (game.pattern && game.pattern.rows) { %>
                         <% game.pattern.rows.forEach((row) => { %>
-                          <div class="pattern-row">
-                            <div class="pattern-label"><%= row.label %> <%= row.turbo %></div>
+                          <div class="pattern-row standard-row">
+                            <div class="pattern-label"><%= row.label %></div>
+                            <div class="pattern-standard-right">
+                              <span class="turbo-text <%= row.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off' %>"><%= row.turbo %></span>
+                              <span class="state-badge <%= row.result === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.result %></span>
+                            </div>
                           </div>
                         <% }) %>
                       <% } else { %>
@@ -489,6 +493,7 @@
     const gamesGrid = document.getElementById("gamesGrid");
     const jakartaTime = document.getElementById("jakarta-time");
     const updateDate = document.getElementById("update-date");
+    const globalLoginLink = <%- JSON.stringify(settings.loginButtonLink || "#") %>;
 
     function toggleTopButton() {
       if (window.scrollY > 280) {
@@ -529,7 +534,7 @@
 
       if (pattern.type === "pragmatic") {
         return pattern.rows.map((row) => `
-          <div class="pattern-row">
+          <div class="pattern-row pragmatic-row">
             <div class="pattern-label">${escapeHtml(row.label)}</div>
             <div class="pattern-icons">
               <span class="state-badge ${stateClass(row.state1)}">${escapeHtml(row.state1)}</span>
@@ -541,8 +546,12 @@
       }
 
       return pattern.rows.map((row) => `
-        <div class="pattern-row">
-          <div class="pattern-label">${escapeHtml(row.label)} ${escapeHtml(row.turbo || "")}</div>
+        <div class="pattern-row standard-row">
+          <div class="pattern-label">${escapeHtml(row.label)}</div>
+          <div class="pattern-standard-right">
+            <span class="turbo-text ${row.turbo === "Turbo On" ? "turbo-on" : "turbo-off"}">${escapeHtml(row.turbo || "")}</span>
+            <span class="state-badge ${stateClass(row.result)}">${escapeHtml(row.result || "❌")}</span>
+          </div>
         </div>
       `).join("");
     }
@@ -575,7 +584,7 @@
                     loading="lazy"
                   />
                   <a
-                    href="${escapeHtml(game.gameLink || "#")}"
+                    href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
                     class="game-overlay-link"
                     target="_blank"
                     rel="nofollow noopener"
