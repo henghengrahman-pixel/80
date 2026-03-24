@@ -1,190 +1,65 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:Inter, sans-serif;
-  background:#0b0b0b;
-  color:#fff;
-}
-
-.admin-layout{
-  display:grid;
-  grid-template-columns:260px 1fr;
-  min-height:100vh;
-}
-
-/* SIDEBAR */
-.sidebar{
-  background:#111;
-  border-right:1px solid rgba(255,255,255,.08);
-  padding:20px;
-}
-
-.logo{
-  font-size:22px;
-  font-weight:900;
-  color:#ffd36a;
-  margin-bottom:30px;
-}
-
-.menu{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.menu a{
-  padding:12px 14px;
-  border-radius:10px;
-  text-decoration:none;
-  color:#fff;
-  background:#1a1a1a;
-  font-size:14px;
-}
-
-.menu a:hover{
-  background:#ffd36a;
-  color:#000;
-}
-
-/* CONTENT */
-.content{
-  padding:30px;
-}
-
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px;
-}
-
-.topbar h1{
-  font-size:28px;
-}
-
-.logout{
-  background:#ff4d5d;
-  padding:10px 14px;
-  border-radius:8px;
-  text-decoration:none;
-  color:#fff;
-}
-
-/* CARDS */
-.cards{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:20px;
-}
-
-.card{
-  background:#151515;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:15px;
-  padding:20px;
-}
-
-.card h3{
-  font-size:18px;
-  margin-bottom:10px;
-}
-
-.card p{
-  font-size:13px;
-  color:#aaa;
-}
-
-.card a{
-  display:inline-block;
-  margin-top:10px;
-  background:#ffd36a;
-  color:#000;
-  padding:8px 12px;
-  border-radius:8px;
-  text-decoration:none;
-  font-weight:bold;
-}
-
-/* MOBILE */
-@media(max-width:900px){
-  .admin-layout{
-    grid-template-columns:1fr;
-  }
-
-  .cards{
-    grid-template-columns:1fr 1fr;
-  }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'Dashboard Admin' %></title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}:root{--bg:#090909;--panel:#141414;--line:rgba(255,255,255,.08);--text:#fff;--muted:rgba(255,255,255,.64);--gold:#ffd36a;--side:260px}body{min-height:100vh;font-family:Inter,sans-serif;background:linear-gradient(180deg,#070707,#101010);color:var(--text)}a{text-decoration:none;color:inherit}button{font:inherit}.layout{display:grid;grid-template-columns:var(--side) 1fr;min-height:100vh}.sidebar{padding:24px 16px;border-right:1px solid var(--line);background:#0f0f0f;position:sticky;top:0;height:100vh}.brand{padding:10px 12px 22px;border-bottom:1px solid var(--line);margin-bottom:18px}.brand strong{display:block;font-size:24px;font-weight:900;color:var(--gold)}.brand span{display:block;margin-top:6px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.menu{display:flex;flex-direction:column;gap:8px}.menu a,.menu button{min-height:46px;border-radius:14px;padding:0 14px;display:flex;align-items:center;background:transparent;border:1px solid transparent;color:#fff;font-size:14px;font-weight:800;cursor:pointer}.menu a:hover,.menu button:hover{background:rgba(255,255,255,.04);border-color:var(--line)}.menu .active{background:linear-gradient(180deg,#fff0b9,#ffcb2f);color:#111}.content{padding:24px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.top h1{font-size:34px;font-weight:900;line-height:1.08;margin-bottom:6px}.top p{font-size:14px;line-height:1.8;color:var(--muted);max-width:760px}.chip{display:inline-flex;align-items:center;min-height:42px;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:13px;font-weight:800}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}.card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02)),#131313;border:1px solid var(--line);border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}.stat{padding:18px}.stat span{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}.stat strong{display:block;font-size:32px;font-weight:900}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel-head{padding:18px;border-bottom:1px solid var(--line)}.panel-head h2{font-size:22px;font-weight:900;margin-bottom:6px}.panel-head p{font-size:13px;line-height:1.7;color:var(--muted)}.panel-body{padding:18px}.list{display:grid;gap:12px}.item{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}.item strong{display:block;margin-bottom:4px}.item span{display:block;color:var(--muted);font-size:13px;line-height:1.7;word-break:break-word}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:14px;font-size:14px;font-weight:800;border:none;cursor:pointer}.btn-primary{background:linear-gradient(180deg,#fff0b9,#ffcb2f);color:#111}.btn-dark{background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff}.logout-form{display:block}@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.stats,.grid{grid-template-columns:1fr}.top{flex-direction:column}.menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.menu{grid-template-columns:1fr}.top h1{font-size:28px}}
+  </style>
 </head>
 <body>
-
-<div class="admin-layout">
-
-  <div class="sidebar">
-    <div class="logo">ADMIN PANEL</div>
-
-    <div class="menu">
-      <a href="/itsiregar8008/dashboard">Dashboard</a>
-      <a href="/itsiregar8008/slider">Slider</a>
-      <a href="/itsiregar8008/providers">Provider</a>
-      <a href="/itsiregar8008/games">Games</a>
-      <a href="/itsiregar8008/settings">Settings</a>
-      <a href="/itsiregar8008/running-text">Running Text</a>
-    </div>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><strong>ADMIN</strong><span>Management Panel</span></div>
+      <nav class="menu">
+        <a href="/<%= adminPath %>/dashboard" class="active">Dashboard</a>
+        <a href="/<%= adminPath %>/sliders">Slider</a>
+        <a href="/<%= adminPath %>/providers">Provider</a>
+        <a href="/<%= adminPath %>/games">Games</a>
+        <a href="/<%= adminPath %>/settings">Settings</a>
+        <form method="POST" action="/<%= adminPath %>/logout" class="logout-form"><button type="submit">Logout</button></form>
+      </nav>
+    </aside>
+    <main class="content">
+      <section class="top">
+        <div>
+          <h1>Dashboard Admin</h1>
+          <p>Semua halaman admin sudah pakai path dan login dari variable. Menu, route, form, dan penyimpanan data sudah sinkron.</p>
+        </div>
+        <div class="chip">Login: <%= adminUsername %></div>
+      </section>
+      <section class="stats">
+        <div class="card stat"><span>Total Provider</span><strong><%= counts.providers %></strong></div>
+        <div class="card stat"><span>Total Games</span><strong><%= counts.games %></strong></div>
+        <div class="card stat"><span>Total Slider</span><strong><%= counts.sliders %></strong></div>
+      </section>
+      <section class="grid">
+        <div class="card">
+          <div class="panel-head"><h2>Aksi Cepat</h2><p>Masuk ke halaman yang paling sering dipakai.</p></div>
+          <div class="panel-body">
+            <div class="actions">
+              <a class="btn btn-primary" href="/<%= adminPath %>/providers">Kelola Provider</a>
+              <a class="btn btn-primary" href="/<%= adminPath %>/games">Kelola Games</a>
+              <a class="btn btn-primary" href="/<%= adminPath %>/sliders">Kelola Slider</a>
+              <a class="btn btn-dark" href="/<%= adminPath %>/settings">Buka Settings</a>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="panel-head"><h2>Info Website</h2><p>Data utama yang sedang aktif.</p></div>
+          <div class="panel-body list">
+            <div class="item"><strong>Nama Website</strong><span><%= settings.siteName || '-' %></span></div>
+            <div class="item"><strong>Deskripsi</strong><span><%= settings.siteDescription || '-' %></span></div>
+            <div class="item"><strong>Login Link</strong><span><%= settings.loginButtonLink || '-' %></span></div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
-
-  <div class="content">
-    <div class="topbar">
-      <h1>Dashboard</h1>
-      <a href="/itsiregar8008/logout" class="logout">Logout</a>
-    </div>
-
-    <div class="cards">
-
-      <div class="card">
-        <h3>Slider</h3>
-        <p>Kelola gambar slider homepage</p>
-        <a href="/itsiregar8008/slider">Kelola</a>
-      </div>
-
-      <div class="card">
-        <h3>Provider</h3>
-        <p>Tambah logo provider dan kategori</p>
-        <a href="/itsiregar8008/providers">Kelola</a>
-      </div>
-
-      <div class="card">
-        <h3>Games</h3>
-        <p>Tambah game dan link permainan</p>
-        <a href="/itsiregar8008/games">Kelola</a>
-      </div>
-
-      <div class="card">
-        <h3>Settings</h3>
-        <p>Logo, background, link tombol</p>
-        <a href="/itsiregar8008/settings">Kelola</a>
-      </div>
-
-      <div class="card">
-        <h3>Running Text</h3>
-        <p>Teks berjalan di atas slider</p>
-        <a href="/itsiregar8008/running-text">Kelola</a>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
 </body>
 </html>
