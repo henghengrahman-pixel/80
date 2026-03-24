@@ -78,7 +78,7 @@
           position: index + 1,
           name: game.title || "Game",
           image: game.imageUrl ? (/^https?:\/\//i.test(game.imageUrl) ? game.imageUrl : `${baseUrl}${game.imageUrl}`) : undefined,
-          url: game.gameLink || canonicalUrl
+          url: settings.loginButtonLink || game.gameLink || canonicalUrl
         }))
     }) %>
   </script>
@@ -300,104 +300,104 @@
       </div>
 
       <% if (games && games.length) { %>
-        <div class="games-grid" id="gamesGrid">
+        <div class="provider-games-grid" id="gamesGrid">
           <% games
             .filter(game => game.isActive !== false)
             .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
             .forEach((game) => { %>
-            <article class="game-card">
+
+            <% const isPragmatic = (game.providerName || "").toLowerCase().includes("pragmatic"); %>
+
+            <article class="provider-game-card">
               <% if (game.labelBadge) { %>
                 <div class="game-badge"><%= game.labelBadge %></div>
               <% } %>
 
-              <div class="game-inner">
-                <div class="game-media-wrap">
-                  <div class="game-media">
+              <div class="provider-game-media">
+                <a
+                  href="<%= settings.loginButtonLink || game.gameLink || '#' %>"
+                  class="provider-game-media-link"
+                  target="_blank"
+                  rel="nofollow noopener"
+                  aria-label="Buka <%= game.title || 'Game' %>"
+                >
+                  <img
+                    src="<%= game.imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>"
+                    alt="<%= game.title || 'Game image' %>"
+                    loading="lazy"
+                  />
+                  <span class="play-chip"><span>Ayo Bermain</span></span>
+                </a>
+              </div>
+
+              <div class="provider-game-pattern">
+                <div class="pattern-head">
+                  <div class="pattern-title">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>Pola Slot</h2>
+                  </div>
+
+                  <% if (game.providerLogoUrl) { %>
                     <img
-                      src="<%= game.imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>"
-                      alt="<%= game.title || 'Game image' %>"
+                      src="<%= game.providerLogoUrl %>"
+                      alt="<%= game.providerName || 'Provider' %>"
+                      class="pattern-provider-logo"
                       loading="lazy"
                     />
-
-                    <a
-                      href="<%= settings.loginButtonLink || game.gameLink || '#' %>"
-                      class="game-overlay-link"
-                      target="_blank"
-                      rel="nofollow noopener"
-                      aria-label="Buka <%= game.title %>"
-                    >
-                      <span class="play-chip"><span>Ayo Bermain</span></span>
-                    </a>
-                  </div>
+                  <% } else { %>
+                    <div class="pattern-provider-fallback">
+                      <%= isPragmatic ? "PP" : "PG" %>
+                    </div>
+                  <% } %>
                 </div>
 
-                <div class="game-side">
-                  <div class="pattern-box">
-                    <div class="pattern-head">
-                      <div class="pattern-title">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <h2>Pola Slot</h2>
-                      </div>
+                <div class="pattern-divider"></div>
 
-                      <% if (game.providerLogoUrl) { %>
-                        <img
-                          src="<%= game.providerLogoUrl %>"
-                          alt="<%= game.providerName || 'Provider' %>"
-                          class="pattern-provider-logo"
-                          loading="lazy"
-                        />
-                      <% } %>
-                    </div>
-
-                    <div class="pattern-divider"></div>
-
-                    <div class="pattern-table">
-                      <% if (game.pattern && game.pattern.type === "pragmatic") { %>
-                        <% game.pattern.rows.forEach((row) => { %>
-                          <div class="pattern-row pragmatic-row">
-                            <div class="pattern-label"><%= row.label %></div>
-                            <div class="pattern-icons">
-                              <span class="state-badge <%= row.state1 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state1 %></span>
-                              <span class="state-badge <%= row.state2 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state2 %></span>
-                              <span class="state-badge <%= row.state3 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state3 %></span>
-                            </div>
-                          </div>
-                        <% }) %>
-                      <% } else if (game.pattern && game.pattern.rows) { %>
-                        <% game.pattern.rows.forEach((row) => { %>
-                          <div class="pattern-row standard-row">
-                            <div class="pattern-label"><%= row.label %></div>
-                            <div class="pattern-standard-right">
-                              <span class="turbo-text <%= row.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off' %>"><%= row.turbo %></span>
-                              <span class="state-badge <%= row.result === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.result %></span>
-                            </div>
-                          </div>
-                        <% }) %>
-                      <% } else { %>
-                        <div class="pattern-row">
-                          <div class="pattern-label">Data belum tersedia</div>
+                <div class="pattern-table">
+                  <% if (game.pattern && game.pattern.type === "pragmatic") { %>
+                    <% game.pattern.rows.forEach((row) => { %>
+                      <div class="pattern-row pragmatic-row">
+                        <div class="pattern-label"><%= row.label %></div>
+                        <div class="pattern-icons">
+                          <span class="state-badge <%= row.state1 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state1 %></span>
+                          <span class="state-badge <%= row.state2 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state2 %></span>
+                          <span class="state-badge <%= row.state3 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state3 %></span>
                         </div>
-                      <% } %>
-                    </div>
-
-                    <div class="time-row">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                        <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                      </svg>
-                      <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
-                    </div>
-
-                    <div class="score-box">
-                      <div
-                        class="score-fill <%= game.scoreClass || 'medium' %>"
-                        style="width:<%= game.score || game.winrate || 0 %>%"
-                      >
-                        <span><%= game.score || game.winrate || 0 %>%</span>
                       </div>
+                    <% }) %>
+                  <% } else if (game.pattern && game.pattern.rows) { %>
+                    <% game.pattern.rows.forEach((row) => { %>
+                      <div class="pattern-row standard-row">
+                        <div class="pattern-label"><%= row.label %></div>
+                        <div class="pattern-standard-right">
+                          <span class="turbo-text <%= row.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off' %>"><%= row.turbo %></span>
+                          <span class="state-badge <%= row.result === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.result %></span>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div class="pattern-row">
+                      <div class="pattern-label">Data belum tersedia</div>
                     </div>
+                  <% } %>
+                </div>
+
+                <div class="time-row">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
+                </div>
+
+                <div class="score-box">
+                  <div
+                    class="score-fill <%= game.scoreClass || 'medium' %>"
+                    style="width:<%= game.score || game.winrate || 0 %>%"
+                  >
+                    <span><%= game.score || game.winrate || 0 %>%</span>
                   </div>
                 </div>
               </div>
@@ -571,74 +571,76 @@
 
       gamesGrid.innerHTML = items
         .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-        .map((game) => `
-          <article class="game-card">
-            ${game.labelBadge ? `<div class="game-badge">${escapeHtml(game.labelBadge)}</div>` : ""}
+        .map((game) => {
+          const isPragmatic = String(game.providerName || "").toLowerCase().includes("pragmatic");
 
-            <div class="game-inner">
-              <div class="game-media-wrap">
-                <div class="game-media">
+          return `
+            <article class="provider-game-card">
+              ${game.labelBadge ? `<div class="game-badge">${escapeHtml(game.labelBadge)}</div>` : ""}
+
+              <div class="provider-game-media">
+                <a
+                  href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
+                  class="provider-game-media-link"
+                  target="_blank"
+                  rel="nofollow noopener"
+                  aria-label="Buka ${escapeHtml(game.title || "Game")}"
+                >
                   <img
                     src="${escapeHtml(game.imageUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop")}"
                     alt="${escapeHtml(game.title || "Game image")}"
                     loading="lazy"
                   />
-                  <a
-                    href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
-                    class="game-overlay-link"
-                    target="_blank"
-                    rel="nofollow noopener"
-                    aria-label="Buka ${escapeHtml(game.title || "Game")}"
-                  >
-                    <span class="play-chip"><span>Ayo Bermain</span></span>
-                  </a>
-                </div>
+                  <span class="play-chip"><span>Ayo Bermain</span></span>
+                </a>
               </div>
 
-              <div class="game-side">
-                <div class="pattern-box">
-                  <div class="pattern-head">
-                    <div class="pattern-title">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      <h2>Pola Slot</h2>
-                    </div>
-
-                    ${game.providerLogoUrl ? `
-                      <img
-                        src="${escapeHtml(game.providerLogoUrl)}"
-                        alt="${escapeHtml(game.providerName || "Provider")}"
-                        class="pattern-provider-logo"
-                        loading="lazy"
-                      />
-                    ` : ""}
-                  </div>
-
-                  <div class="pattern-divider"></div>
-
-                  <div class="pattern-table">
-                    ${renderPattern(game.pattern)}
-                  </div>
-
-                  <div class="time-row">
+              <div class="provider-game-pattern">
+                <div class="pattern-head">
+                  <div class="pattern-title">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                      <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
+                    <h2>Pola Slot</h2>
                   </div>
 
-                  <div class="score-box">
-                    <div class="score-fill ${escapeHtml(game.scoreClass || "medium")}" style="width:${Number(game.score || game.winrate || 0)}%">
-                      <span>${Number(game.score || game.winrate || 0)}%</span>
+                  ${game.providerLogoUrl ? `
+                    <img
+                      src="${escapeHtml(game.providerLogoUrl)}"
+                      alt="${escapeHtml(game.providerName || "Provider")}"
+                      class="pattern-provider-logo"
+                      loading="lazy"
+                    />
+                  ` : `
+                    <div class="pattern-provider-fallback">
+                      ${isPragmatic ? "PP" : "PG"}
                     </div>
+                  `}
+                </div>
+
+                <div class="pattern-divider"></div>
+
+                <div class="pattern-table">
+                  ${renderPattern(game.pattern)}
+                </div>
+
+                <div class="time-row">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
+                </div>
+
+                <div class="score-box">
+                  <div class="score-fill ${escapeHtml(game.scoreClass || "medium")}" style="width:${Number(game.score || game.winrate || 0)}%">
+                    <span>${Number(game.score || game.winrate || 0)}%</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </article>
-        `)
+            </article>
+          `;
+        })
         .join("");
     }
 
