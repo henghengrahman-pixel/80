@@ -217,6 +217,7 @@
               <a
                 href="/provider/<%= provider.slug %>"
                 class="provider-link <%= currentProvider && currentProvider.slug === provider.slug ? 'active' : '' %>"
+                aria-label="Buka provider <%= provider.name %>"
               >
                 <div class="provider-icon-wrap">
                   <% if (provider.logoUrl) { %>
@@ -271,7 +272,7 @@
 
           <p class="panel-intro">
             <%= currentProvider
-              ? `Temukan daftar game, pola, jam bermain, dan update katalog terbaru dari provider ${currentProvider.name} dalam tampilan yang cepat dan nyaman dibuka di handphone maupun desktop.`
+              ? `Temukan daftar game, pola, jam bermain, dan update katalog terbaru dari provider ${currentProvider.name} dalam tampilan yang cepat, rapi, dan nyaman dibuka di handphone maupun desktop.`
               : (settings.siteDescription || "Temukan katalog game, promo terbaru, informasi provider, dan update live dalam satu halaman yang cepat, rapi, dan mobile friendly.") %>
           </p>
 
@@ -550,7 +551,7 @@
           <div class="pattern-label">${escapeHtml(row.label)}</div>
           <div class="pattern-standard-right">
             <span class="turbo-text ${row.turbo === "Turbo On" ? "turbo-on" : "turbo-off"}">${escapeHtml(row.turbo || "")}</span>
-            <span class="state-badge ${stateClass(row.result)}">${escapeHtml(row.result || "❌")}</span>
+            <span class="state-badge ${stateClass(row.result || "❌")}">${escapeHtml(row.result || "❌")}</span>
           </div>
         </div>
       `).join("");
