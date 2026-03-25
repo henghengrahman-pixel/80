@@ -260,9 +260,8 @@
       <div class="panel-head">
         <div class="panel-title-wrap">
           <div class="panel-meta panel-meta-top">
-            <span class="meta-chip">
-              <span class="dot"></span>
-              <span>Update: <span id="update-date"><%= updateLabel || jakartaNow %></span></span>
+            <span class="meta-chip like-chip">
+              <span>SUKA(5.9) : ⭐⭐⭐⭐⭐</span>
             </span>
           </div>
 
@@ -275,28 +274,13 @@
               ? `Temukan daftar game, pola, jam bermain, dan update katalog terbaru dari provider ${currentProvider.name} dalam tampilan yang cepat, rapi, dan nyaman dibuka di handphone maupun desktop.`
               : (settings.siteDescription || "Temukan katalog game, promo terbaru, informasi provider, dan update live dalam satu halaman yang cepat, rapi, dan mobile friendly.") %>
           </p>
-
-          <div class="panel-meta">
-            <span class="meta-chip">
-              <span>Jakarta: <span id="jakarta-time"><%= jakartaNow %></span></span>
-            </span>
-          </div>
         </div>
 
         <div class="panel-head-right">
           <div class="live-badge">
             <span class="pulse"></span>
-            <span>Realtime</span>
+            <span>REALTIME</span>
           </div>
-
-          <button class="refresh-btn" id="refreshGamesBtn" type="button" aria-label="Refresh data">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M4 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M20 10a8 8 0 0 0-13.66-4.66L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M4 14a8 8 0 0 0 13.66 4.66L20 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -490,10 +474,7 @@
     });
 
     const toTopBtn = document.getElementById("toTopBtn");
-    const refreshGamesBtn = document.getElementById("refreshGamesBtn");
     const gamesGrid = document.getElementById("gamesGrid");
-    const jakartaTime = document.getElementById("jakarta-time");
-    const updateDate = document.getElementById("update-date");
     const globalLoginLink = <%- JSON.stringify(settings.loginButtonLink || "#") %>;
 
     function toggleTopButton() {
@@ -654,28 +635,12 @@
 
         if (data && data.success) {
           renderGames((data.items || []).filter(item => item.isActive !== false));
-          if (jakartaTime) jakartaTime.textContent = data.jakarta?.fullDateTime || "";
-          if (updateDate) updateDate.textContent = data.jakarta?.fullDate || "";
         }
       } catch (err) {
         console.error("Gagal refresh games:", err);
       }
     }
 
-    async function refreshJakartaClock() {
-      try {
-        const res = await fetch("/api/jakarta-time", { cache: "no-store" });
-        const data = await res.json();
-        if (jakartaTime) jakartaTime.textContent = data.fullDateTime || "";
-        if (updateDate) updateDate.textContent = data.fullDate || "";
-      } catch (err) {
-        console.error("Gagal update jam Jakarta:", err);
-      }
-    }
-
-    refreshGamesBtn?.addEventListener("click", refreshGames);
-
-    setInterval(refreshJakartaClock, 15000);
     setInterval(refreshGames, 45000);
   </script>
 </body>
