@@ -303,20 +303,22 @@ function randomJamRangeNearNow() {
   let offsetRoll = Math.random();
   let offset = 0;
 
-  if (offsetRoll < 0.75) {
-    offset = randomInt(-20, 25);
-  } else if (offsetRoll < 0.95) {
-    offset = randomInt(-45, 50);
+  if (offsetRoll < 0.92) {
+    offset = randomInt(-8, 15);
+  } else if (offsetRoll < 0.99) {
+    offset = randomInt(-18, 22);
   } else {
-    offset = randomInt(-120, 120);
+    offset = randomInt(-30, 30);
   }
 
   let startTotal = nowMinutes + offset;
+
   if (startTotal < 0) startTotal += 1440;
   if (startTotal >= 1440) startTotal -= 1440;
 
-  const duration = randomInt(18, 42);
+  const duration = randomInt(14, 28);
   let endTotal = startTotal + duration;
+
   if (endTotal >= 1440) endTotal -= 1440;
 
   const sh = pad2(Math.floor(startTotal / 60));
@@ -389,18 +391,35 @@ function buildStandardPattern() {
     type: "standard",
     rows: shuffle(labelsPool)
       .slice(0, 3)
-      .map((label) => ({
-        label,
-        turbo: Math.random() > 0.5 ? "Turbo On" : "Turbo Off",
-        result: Math.random() > 0.5 ? "☑️" : "❌",
-      })),
+      .map((label) => {
+        const turbo = Math.random() > 0.5 ? "Turbo On" : "Turbo Off";
+        return {
+          label,
+          turbo,
+          result: turbo === "Turbo On" ? "☑️" : "❌",
+        };
+      }),
   };
 }
 
 function normalizePattern(input, providerName = "") {
   if (input && input.type && Array.isArray(input.rows) && input.rows.length) {
+    if (input.type === "standard") {
+      return {
+        ...input,
+        rows: input.rows.map((row) => {
+          const turbo = normalizeText(row.turbo) || "Turbo Off";
+          return {
+            ...row,
+            turbo,
+            result: turbo === "Turbo On" ? "☑️" : "❌",
+          };
+        }),
+      };
+    }
     return input;
   }
+
   return isPragmaticProvider(providerName)
     ? buildPragmaticPattern()
     : buildStandardPattern();
