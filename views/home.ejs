@@ -72,7 +72,6 @@
       name: currentProvider ? `Daftar game ${currentProvider.name}` : "Daftar game dan promo",
       itemListElement: games
         .filter(game => game.isActive !== false)
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .map((game, index) => ({
           "@type": "ListItem",
           position: index + 1,
@@ -288,10 +287,11 @@
         <div class="provider-games-grid" id="gamesGrid">
           <% games
             .filter(game => game.isActive !== false)
-            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
             .forEach((game) => { %>
 
             <% const isPragmatic = (game.providerName || "").toLowerCase().includes("pragmatic"); %>
+            <% const scoreValue = Number(game.score || game.winrate || 0); %>
+            <% const scoreClass = scoreValue >= 60 ? "high" : "medium"; %>
 
             <article class="provider-game-card">
               <% if (game.labelBadge) { %>
@@ -377,18 +377,15 @@
                   <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
                 </div>
 
-<%
-  const scoreValue = Number(game.score || game.winrate || 0);
-  const scoreClass = scoreValue >= 60 ? "high" : "medium";
-%>
-<div class="score-box">
-  <div
-    class="score-fill <%= scoreClass %>"
-    style="width:<%= scoreValue %>%"
-  >
-    <span><%= scoreValue %>%</span>
-  </div>
-</div>
+                <div class="score-box">
+                  <div
+                    class="score-fill <%= scoreClass %>"
+                    style="width:<%= scoreValue %>%"
+                  >
+                    <span><%= scoreValue %>%</span>
+                  </div>
+                </div>
+              </div>
             </article>
           <% }) %>
         </div>
@@ -555,9 +552,10 @@
       }
 
       gamesGrid.innerHTML = items
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .map((game) => {
           const isPragmatic = String(game.providerName || "").toLowerCase().includes("pragmatic");
+          const score = Number(game.score || game.winrate || 0);
+          const scoreFillClass = score >= 60 ? "high" : "medium";
 
           return `
             <article class="provider-game-card">
@@ -618,10 +616,9 @@
                 </div>
 
                 <div class="score-box">
-  <div class="score-fill ${Number(game.score || game.winrate || 0) >= 60 ? "high" : "medium"}" style="width:${Number(game.score || game.winrate || 0)}%">
-    <span>${Number(game.score || game.winrate || 0)}%</span>
-  </div>
-</div>
+                  <div class="score-fill ${scoreFillClass}" style="width:${score}%">
+                    <span>${score}%</span>
+                  </div>
                 </div>
               </div>
             </article>
