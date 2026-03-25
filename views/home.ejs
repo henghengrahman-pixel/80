@@ -2,171 +2,725 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+  />
 
-  <title><%= settings.siteName || "Live RTP Slot" %></title>
+  <title><%= currentProvider ? `${currentProvider.name} | ${settings.seoTitle || settings.siteName}` : (settings.seoTitle || settings.siteName || "Live Promo Center") %></title>
 
+  <meta
+    name="description"
+    content="<%= currentProvider ? `RTP SLOT OMTOGEL ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'RTP SLOT OMTOGEL ') %>"
+  />
+  <meta
+    name="keywords"
+    content="<%= settings.seoKeywords || 'RTP SLOT OMTOGEL ' %>"
+  />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#111111" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="<%= currentProvider ? `${currentProvider.name} | ${settings.siteName || 'Live Promo Center'}` : (settings.seoTitle || settings.siteName || 'Live Promo Center') %>" />
+  <meta property="og:description" content="<%= currentProvider ? `RTP slot ${currentProvider.name} OMTOGEL.` : (settings.seoDescription || settings.siteDescription || 'RTP SLOT OMTOGEL') %>" />
+  <meta property="og:image" content="<%= ogImage || `${baseUrl}/images/placeholder-cover.jpg` %>" />
+  <meta property="og:locale" content="id_ID" />
+  <meta property="og:url" content="<%= canonicalUrl %>" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="<%= currentProvider ? `${currentProvider.name} | ${settings.siteName || 'Live Promo Center'}` : (settings.seoTitle || settings.siteName || 'Live Promo Center') %>" />
+  <meta name="twitter:description" content="<%= currentProvider ? `RTP SLOT OMTOGEL ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'RTP SLOT OMTOGEL') %>" />
+  <meta name="twitter:image" content="<%= ogImage || `${baseUrl}/images/placeholder-cover.jpg` %>" />
+
+  <link rel="canonical" href="<%= canonicalUrl %>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+  />
   <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
 
   <style>
     body{
       background:
-        linear-gradient(rgba(0,0,0,.75), rgba(0,0,0,.85)),
+        linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.84)),
         url("<%= settings.heroBackground || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop' %>") center/cover fixed no-repeat;
     }
   </style>
+
+  <script type="application/ld+json">
+    <%- JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: settings.siteName || "Live Promo Center",
+      url: baseUrl,
+      description: settings.seoDescription || settings.siteDescription || "RTP SLOT OMTOGEL "
+    }) %>
+  </script>
+
+  <% if (games && games.length) { %>
+  <script type="application/ld+json">
+    <%- JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: currentProvider ? `Daftar game ${currentProvider.name}` : "Daftar game dan promo",
+      itemListElement: games
+        .filter(game => game.isActive !== false)
+        .map((game, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: game.title || "Game",
+          image: game.imageUrl ? (/^https?:\/\//i.test(game.imageUrl) ? game.imageUrl : `${baseUrl}${game.imageUrl}`) : undefined,
+          url: settings.loginButtonLink || game.gameLink || canonicalUrl
+        }))
+    }) %>
+  </script>
+  <% } %>
 </head>
 <body>
+  <div class="ambient-blur"></div>
 
-<div class="page-shell">
+  <div class="page-shell" id="top-page">
+    <div class="top-space"></div>
 
-<!-- HEADER -->
-<header class="brand-panel">
-  <div class="brand-head">
-    <% if (settings.logoUrl) { %>
-      <img src="<%= settings.logoUrl %>" class="brand-logo" loading="eager"/>
-    <% } else { %>
-      <div class="brand-fallback"><%= settings.siteName %></div>
-    <% } %>
-  </div>
-</header>
-
-<!-- PROVIDERS -->
-<section class="providers-shell">
-  <div class="providers-scroll">
-    <% providers.forEach(provider => { %>
-      <div class="provider-item">
-        <a href="/provider/<%= provider.slug %>" class="provider-link">
-          <div class="provider-icon-wrap">
-            <% if (provider.logoUrl) { %>
-              <img src="<%= provider.logoUrl %>" class="provider-icon" loading="lazy" decoding="async"/>
-            <% } %>
-          </div>
-          <div class="provider-name"><%= provider.name %></div>
-        </a>
-      </div>
-    <% }) %>
-  </div>
-</section>
-
-<!-- GAMES -->
-<section class="content-panel">
-  <div class="provider-games-grid" id="gamesGrid">
-    <% games.forEach(game => { %>
-
-      <% const score = Number(game.score || game.winrate || 0); %>
-      <% const scoreClass = score >= 60 ? "high" : "medium"; %>
-
-      <article class="provider-game-card">
-
-        <% if (game.labelBadge) { %>
-          <div class="game-badge"><%= game.labelBadge %></div>
-        <% } %>
-
-        <div class="provider-game-media">
-          <a href="<%= settings.loginButtonLink %>" target="_blank">
+    <header class="brand-panel">
+      <div class="brand-head">
+        <a href="/" class="brand-logo-link" aria-label="Ke beranda">
+          <% if (settings.logoUrl) { %>
             <img
-              src="<%= game.imageUrl %>"
-              alt="<%= game.title %>"
-              loading="lazy"
+              src="<%= settings.logoUrl %>"
+              alt="<%= settings.siteName || 'Logo situs' %>"
+              class="brand-logo"
+              loading="eager"
               decoding="async"
             />
-          </a>
-        </div>
+          <% } else { %>
+            <div class="brand-fallback"><%= settings.siteName || "Live Promo Center" %></div>
+          <% } %>
+        </a>
+      </div>
 
-        <div class="provider-game-pattern">
-          <div class="pattern-table">
-
-            <% if (game.pattern && game.pattern.rows) { %>
-              <% game.pattern.rows.forEach(row => { %>
-                <div class="pattern-row">
-                  <div class="pattern-label"><%= row.label %></div>
-                  <div class="pattern-standard-right">
-                    <span class="turbo-text <%= row.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off' %>">
-                      <%= row.turbo %>
-                    </span>
-                    <span class="state-badge <%= row.result === '☑️' ? 'state-ok' : 'state-no' %>">
-                      <%= row.result %>
-                    </span>
-                  </div>
-                </div>
-              <% }) %>
+      <div class="ticker-wrap">
+        <div class="ticker-label">Info</div>
+        <div class="ticker">
+          <div class="ticker-track">
+            <% const tickerText = settings.runningText || "Selamat datang di Live Promo Center"; %>
+            <% for (let i = 0; i < 10; i++) { %>
+              <span class="ticker-item"><%= tickerText %></span>
             <% } %>
-
           </div>
-
-          <div class="time-row">
-            Jam: <%= game.timeRange %>
-          </div>
-
-          <div class="score-box">
-            <div class="score-fill <%= scoreClass %>" style="width:<%= score %>%">
-              <span><%= score %>%</span>
-            </div>
-          </div>
-
         </div>
-      </article>
+      </div>
+    </header>
 
-    <% }) %>
-  </div>
-</section>
+    <section class="slider-card">
+      <div class="swiper heroSwiper">
+        <div class="swiper-wrapper">
+          <% if (sliders && sliders.length) { %>
+            <% sliders
+              .filter(slide => slide.isActive !== false)
+              .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+              .forEach((slide, index) => { %>
+              <div class="swiper-slide">
+                <div class="slide-media">
+                  <img
+                    src="<%= slide.imageUrl %>"
+                    alt="<%= slide.title || `Slide ${index + 1}` %>"
+                    loading="<%= index === 0 ? 'eager' : 'lazy' %>"
+                    decoding="async"
+                  />
+                </div>
 
-</div>
+                <% if (slide.title || slide.subtitle || slide.buttonText) { %>
+                  <div class="slide-overlay">
+                    <div class="slide-copy">
+                      <% if (slide.title) { %>
+                        <h2><%= slide.title %></h2>
+                      <% } %>
+                      <% if (slide.subtitle) { %>
+                        <p><%= slide.subtitle %></p>
+                      <% } %>
+                    </div>
 
-<script>
-async function refreshGames(){
-  try{
-    const res = await fetch('/api/games');
-    const data = await res.json();
-    if(!data.success) return;
-
-    const grid = document.getElementById('gamesGrid');
-
-    grid.innerHTML = data.items.map(game=>{
-      const score = Number(game.score || game.winrate || 0);
-      const scoreClass = score >= 60 ? "high" : "medium";
-
-      return `
-      <article class="provider-game-card">
-        ${game.labelBadge ? `<div class="game-badge">${game.labelBadge}</div>` : ""}
-
-        <div class="provider-game-media">
-          <a href="${game.gameLink || '#'}" target="_blank">
-            <img src="${game.imageUrl}" loading="lazy" decoding="async"/>
-          </a>
-        </div>
-
-        <div class="provider-game-pattern">
-          <div class="pattern-table">
-            ${(game.pattern?.rows || []).map(r=>`
-              <div class="pattern-row">
-                <div class="pattern-label">${r.label}</div>
-                <div class="pattern-standard-right">
-                  <span class="turbo-text ${r.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off'}">${r.turbo}</span>
-                  <span class="state-badge ${r.result === '☑️' ? 'state-ok' : 'state-no'}">${r.result}</span>
+                    <% if (slide.buttonText && slide.buttonLink) { %>
+                      <a
+                        class="slide-btn"
+                        href="<%= slide.buttonLink %>"
+                        target="_blank"
+                        rel="nofollow noopener"
+                      >
+                        <%= slide.buttonText %>
+                      </a>
+                    <% } %>
+                  </div>
+                <% } %>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="swiper-slide">
+              <div class="slide-media">
+                <img
+                  src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop"
+                  alt="Slide utama"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+              <div class="slide-overlay">
+                <div class="slide-copy">
+                  <h2><%= settings.siteName || "Live Promo Center" %></h2>
+                  <p><%= settings.siteDescription || "RTP SLOT OMTOGEL " %></p>
                 </div>
               </div>
-            `).join("")}
+            </div>
+          <% } %>
+        </div>
+
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+
+      <div class="cta-row">
+        <a
+          href="<%= settings.loginButtonLink || '#' %>"
+          class="cta-btn"
+          target="_blank"
+          rel="nofollow noopener"
+        >
+          LOGIN
+        </a>
+
+        <a
+          href="<%= settings.daftarButtonLink || '#' %>"
+          class="cta-btn"
+          target="_blank"
+          rel="nofollow noopener"
+        >
+          DAFTAR
+        </a>
+      </div>
+    </section>
+
+    <section class="providers-shell">
+      <div class="providers-scroll">
+        <% if (providers && providers.length) { %>
+          <% providers
+            .filter(provider => provider.isActive !== false)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+            .forEach((provider) => { %>
+            <div class="provider-item">
+              <a
+                href="/provider/<%= provider.slug %>"
+                class="provider-link <%= currentProvider && currentProvider.slug === provider.slug ? 'active' : '' %>"
+                aria-label="Buka provider <%= provider.name %>"
+              >
+                <div class="provider-icon-wrap">
+                  <% if (provider.logoUrl) { %>
+                    <img
+                      src="<%= provider.logoUrl %>"
+                      alt="<%= provider.name %>"
+                      class="provider-icon"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  <% } else { %>
+                    <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                  <% } %>
+                </div>
+                <div class="provider-name"><%= provider.name %></div>
+              </a>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="provider-item">
+            <a href="/" class="provider-link active">
+              <div class="provider-icon-wrap">
+                <% if (settings.logoUrl) { %>
+                  <img src="<%= settings.logoUrl %>" alt="Provider" class="provider-icon" loading="lazy" decoding="async" />
+                <% } else { %>
+                  <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                <% } %>
+              </div>
+              <div class="provider-name">PROVIDER</div>
+            </a>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="content-panel" id="games-section">
+      <div class="panel-head">
+        <div class="panel-title-wrap">
+          <div class="panel-meta panel-meta-top">
+            <span class="meta-chip like-chip">
+              <span>SUKA(5.9) : ⭐⭐⭐⭐⭐</span>
+            </span>
           </div>
 
-          <div class="time-row">Jam: ${game.timeRange}</div>
+          <h1>
+            <%= currentProvider ? `RTP SLOT OMTOGEL ${currentProvider.name} Live Update` : `${settings.siteName || "Live Promo Center"} - SLOT LIVE RTP` %>
+          </h1>
 
-          <div class="score-box">
-            <div class="score-fill ${scoreClass}" style="width:${score}%">
-              <span>${score}%</span>
-            </div>
+          <p class="panel-intro">
+            <%= currentProvider
+              ? `Temukan daftar game, pola, jam bermain, dan update rtp terbaru dari provider ${currentProvider.name} dalam tampilan Gunakan pola dengan tepat dan Bijak.`
+              : (settings.siteDescription || "") %>
+          </p>
+        </div>
+
+        <div class="panel-head-right">
+          <div class="live-badge">
+            <span class="pulse"></span>
+            <span>RTP REALTIME</span>
           </div>
         </div>
-      </article>`;
-    }).join('');
+      </div>
 
-  }catch(e){}
-}
+      <% if (games && games.length) { %>
+        <div class="provider-games-grid" id="gamesGrid">
+          <% games
+            .filter(game => game.isActive !== false)
+            .forEach((game) => { %>
 
-setInterval(refreshGames, 180000);
-</script>
+            <% const isPragmatic = (game.providerName || "").toLowerCase().includes("pragmatic"); %>
+            <% const scoreValue = Number(game.score || game.winrate || 0); %>
+            <% const scoreClass = scoreValue >= 60 ? "high" : "medium"; %>
 
+            <article class="provider-game-card">
+              <% if (game.labelBadge) { %>
+                <div class="game-badge"><%= game.labelBadge %></div>
+              <% } %>
+
+              <div class="provider-game-media">
+                <a
+                  href="<%= settings.loginButtonLink || game.gameLink || '#' %>"
+                  class="provider-game-media-link"
+                  target="_blank"
+                  rel="nofollow noopener"
+                  aria-label="Buka <%= game.title || 'Game' %>"
+                >
+                  <img
+                    src="<%= game.imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>"
+                    alt="<%= game.title || 'Game image' %>"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span class="play-chip"><span>Ayo Bermain</span></span>
+                </a>
+              </div>
+
+              <div class="provider-game-pattern">
+                <div class="pattern-head">
+                  <div class="pattern-title">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>Pola Slot</h2>
+                  </div>
+
+                  <% if (game.providerLogoUrl) { %>
+                    <img
+                      src="<%= game.providerLogoUrl %>"
+                      alt="<%= game.providerName || 'Provider' %>"
+                      class="pattern-provider-logo"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  <% } else { %>
+                    <div class="pattern-provider-fallback">
+                      <%= isPragmatic ? "PP" : "PG" %>
+                    </div>
+                  <% } %>
+                </div>
+
+                <div class="pattern-divider"></div>
+
+                <div class="pattern-table">
+                  <% if (game.pattern && game.pattern.type === "pragmatic") { %>
+                    <% game.pattern.rows.forEach((row) => { %>
+                      <div class="pattern-row pragmatic-row">
+                        <div class="pattern-label"><%= row.label %></div>
+                        <div class="pattern-icons">
+                          <span class="state-badge <%= row.state1 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state1 %></span>
+                          <span class="state-badge <%= row.state2 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state2 %></span>
+                          <span class="state-badge <%= row.state3 === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.state3 %></span>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else if (game.pattern && game.pattern.rows) { %>
+                    <% game.pattern.rows.forEach((row) => { %>
+                      <div class="pattern-row standard-row">
+                        <div class="pattern-label"><%= row.label %></div>
+                        <div class="pattern-standard-right">
+                          <span class="turbo-text <%= row.turbo === 'Turbo On' ? 'turbo-on' : 'turbo-off' %>"><%= row.turbo %></span>
+                          <span class="state-badge <%= row.result === '☑️' ? 'state-ok' : 'state-no' %>"><%= row.result %></span>
+                        </div>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <div class="pattern-row">
+                      <div class="pattern-label">Data belum tersedia</div>
+                    </div>
+                  <% } %>
+                </div>
+
+                <div class="time-row">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
+                </div>
+
+                <div class="score-box">
+                  <div
+                    class="score-fill <%= scoreClass %>"
+                    style="width:<%= scoreValue %>%"
+                  >
+                    <span><%= scoreValue %>%</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+
+        <% if (gamesHasMore) { %>
+          <div class="load-more-wrap" id="loadMoreWrap">
+            <button
+              type="button"
+              class="load-more-btn"
+              id="loadMoreBtn"
+              data-next-limit="<%= gamesNextLimit %>"
+            >
+              Muat Lagi
+            </button>
+          </div>
+        <% } else { %>
+          <div class="load-more-wrap" id="loadMoreWrap" style="display:none;"></div>
+        <% } %>
+      <% } else { %>
+        <div class="empty-state">
+          <h3>Belum ada data game</h3>
+          <p>RTP game masih kosong. Tambahkan data provider dan game dari dashboard admin agar halaman ini langsung terisi.</p>
+        </div>
+      <% } %>
+    </section>
+
+    <div class="footer-space"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <a href="/" class="active">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 10.5 12 3l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 9.5V20h14V9.5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span>Home</span>
+      </a>
+
+      <a
+        href="<%= settings.promosiButtonLink || '#' %>"
+        target="_blank"
+        rel="nofollow noopener"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3v18M8 7h6a3 3 0 0 1 0 6H10a3 3 0 1 0 0 6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Promosi</span>
+      </a>
+
+      <a
+        href="<%= settings.daftarButtonLink || '#' %>"
+        target="_blank"
+        rel="nofollow noopener"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Daftar</span>
+      </a>
+
+      <a
+        href="<%= settings.contactButtonLink || '#' %>"
+        target="_blank"
+        rel="nofollow noopener"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        <span>Contact</span>
+      </a>
+    </div>
+  </nav>
+
+  <button class="to-top" id="toTopBtn" type="button" aria-label="Naik ke atas">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script>
+    const heroSwiper = new Swiper(".heroSwiper", {
+      loop: true,
+      speed: 850,
+      grabCursor: true,
+      effect: "slide",
+      autoplay: {
+        delay: 3200,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true
+      },
+      pagination: {
+        el: ".swiper-pagination",
+        clickable: true
+      },
+      navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev"
+      }
+    });
+
+    const toTopBtn = document.getElementById("toTopBtn");
+    const gamesGrid = document.getElementById("gamesGrid");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    const loadMoreWrap = document.getElementById("loadMoreWrap");
+    const globalLoginLink = <%- JSON.stringify(settings.loginButtonLink || "#") %>;
+    const providerSlugValue = <%- JSON.stringify(currentProvider ? currentProvider.slug : "") %>;
+    let currentLimit = <%- JSON.stringify(gamesCurrentLimit || 60) %>;
+    const loadStep = <%- JSON.stringify(gamesStep || 30) %>;
+
+    function toggleTopButton() {
+      if (window.scrollY > 280) {
+        toTopBtn.classList.add("show");
+      } else {
+        toTopBtn.classList.remove("show");
+      }
+    }
+
+    window.addEventListener("scroll", toggleTopButton);
+    toggleTopButton();
+
+    toTopBtn?.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    function stateClass(symbol) {
+      return symbol === "☑️" ? "state-ok" : "state-no";
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderPattern(pattern) {
+      if (!pattern || !Array.isArray(pattern.rows)) {
+        return `
+          <div class="pattern-row">
+            <div class="pattern-label">Data belum tersedia</div>
+          </div>
+        `;
+      }
+
+      if (pattern.type === "pragmatic") {
+        return pattern.rows.map((row) => `
+          <div class="pattern-row pragmatic-row">
+            <div class="pattern-label">${escapeHtml(row.label)}</div>
+            <div class="pattern-icons">
+              <span class="state-badge ${stateClass(row.state1)}">${escapeHtml(row.state1)}</span>
+              <span class="state-badge ${stateClass(row.state2)}">${escapeHtml(row.state2)}</span>
+              <span class="state-badge ${stateClass(row.state3)}">${escapeHtml(row.state3)}</span>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      return pattern.rows.map((row) => `
+        <div class="pattern-row standard-row">
+          <div class="pattern-label">${escapeHtml(row.label)}</div>
+          <div class="pattern-standard-right">
+            <span class="turbo-text ${row.turbo === "Turbo On" ? "turbo-on" : "turbo-off"}">${escapeHtml(row.turbo || "")}</span>
+            <span class="state-badge ${stateClass(row.result || "❌")}">${escapeHtml(row.result || "❌")}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function gameCardHtml(game) {
+      const isPragmatic = String(game.providerName || "").toLowerCase().includes("pragmatic");
+      const score = Number(game.score || game.winrate || 0);
+      const scoreFillClass = score >= 60 ? "high" : "medium";
+
+      return `
+        <article class="provider-game-card">
+          ${game.labelBadge ? `<div class="game-badge">${escapeHtml(game.labelBadge)}</div>` : ""}
+
+          <div class="provider-game-media">
+            <a
+              href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
+              class="provider-game-media-link"
+              target="_blank"
+              rel="nofollow noopener"
+              aria-label="Buka ${escapeHtml(game.title || "Game")}"
+            >
+              <img
+                src="${escapeHtml(game.imageUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop")}"
+                alt="${escapeHtml(game.title || "Game image")}"
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="play-chip"><span>Ayo Bermain</span></span>
+            </a>
+          </div>
+
+          <div class="provider-game-pattern">
+            <div class="pattern-head">
+              <div class="pattern-title">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h2>Pola Slot</h2>
+              </div>
+
+              ${game.providerLogoUrl ? `
+                <img
+                  src="${escapeHtml(game.providerLogoUrl)}"
+                  alt="${escapeHtml(game.providerName || "Provider")}"
+                  class="pattern-provider-logo"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ` : `
+                <div class="pattern-provider-fallback">
+                  ${isPragmatic ? "PP" : "PG"}
+                </div>
+              `}
+            </div>
+
+            <div class="pattern-divider"></div>
+
+            <div class="pattern-table">
+              ${renderPattern(game.pattern)}
+            </div>
+
+            <div class="time-row">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
+            </div>
+
+            <div class="score-box">
+              <div class="score-fill ${scoreFillClass}" style="width:${score}%">
+                <span>${score}%</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderGames(items) {
+      if (!gamesGrid) return;
+
+      if (!Array.isArray(items) || !items.length) {
+        gamesGrid.innerHTML = `
+          <div class="empty-state" style="grid-column:1 / -1;">
+            <h3>Belum ada data game</h3>
+            <p>RTP game masih kosong. Silahkan Hubingin Admin.</p>
+          </div>
+        `;
+        return;
+      }
+
+      gamesGrid.innerHTML = items.map(gameCardHtml).join("");
+    }
+
+    function updateLoadMoreUi(data) {
+      if (!loadMoreWrap) return;
+
+      if (data && data.hasMore) {
+        loadMoreWrap.style.display = "";
+        if (loadMoreBtn) {
+          loadMoreBtn.dataset.nextLimit = String(data.nextLimit || (currentLimit + loadStep));
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = "Muat Lagi";
+        }
+      } else {
+        loadMoreWrap.style.display = "none";
+      }
+    }
+
+    async function fetchGames(limitValue) {
+      const params = new URLSearchParams();
+      if (providerSlugValue) params.set("provider", providerSlugValue);
+      if (limitValue) params.set("limit", String(limitValue));
+
+      const res = await fetch(`/api/games?${params.toString()}`, { cache: "no-store" });
+      return res.json();
+    }
+
+    async function refreshGames() {
+      try {
+        const data = await fetchGames(currentLimit);
+
+        if (data && data.success) {
+          renderGames((data.items || []).filter(item => item.isActive !== false));
+          currentLimit = Number(data.currentLimit || currentLimit);
+          updateLoadMoreUi(data);
+        }
+      } catch (err) {
+        console.error("Gagal refresh games:", err);
+      }
+    }
+
+    async function loadMoreGames() {
+      if (!loadMoreBtn) return;
+
+      try {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = "Memuat...";
+
+        const nextLimit = Number(loadMoreBtn.dataset.nextLimit || (currentLimit + loadStep));
+        const data = await fetchGames(nextLimit);
+
+        if (data && data.success) {
+          renderGames((data.items || []).filter(item => item.isActive !== false));
+          currentLimit = Number(data.currentLimit || nextLimit);
+          updateLoadMoreUi(data);
+        } else {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = "Muat Lagi";
+        }
+      } catch (err) {
+        console.error("Gagal load more games:", err);
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = "Muat Lagi";
+      }
+    }
+
+    loadMoreBtn?.addEventListener("click", loadMoreGames);
+
+    setInterval(refreshGames, 180000);
+  </script>
 </body>
 </html>
