@@ -30,7 +30,7 @@
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="<%= currentProvider ? `${currentProvider.name} | ${settings.siteName || 'Live Promo Center'}` : (settings.seoTitle || settings.siteName || 'Live Promo Center') %>" />
-  <meta name="twitter:description" content="<%= currentProvider ? `RTP SLOT OMTOGEK ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'RTP SLOT OMTOGEL') %>" />
+  <meta name="twitter:description" content="<%= currentProvider ? `RTP SLOT OMTOGEL ${currentProvider.name} dengan tampilan modern, cepat, dan mobile friendly.` : (settings.seoDescription || settings.siteDescription || 'RTP SLOT OMTOGEL') %>" />
   <meta name="twitter:image" content="<%= ogImage || `${baseUrl}/images/placeholder-cover.jpg` %>" />
 
   <link rel="canonical" href="<%= canonicalUrl %>" />
@@ -98,6 +98,7 @@
               alt="<%= settings.siteName || 'Logo situs' %>"
               class="brand-logo"
               loading="eager"
+              decoding="async"
             />
           <% } else { %>
             <div class="brand-fallback"><%= settings.siteName || "Live Promo Center" %></div>
@@ -132,6 +133,7 @@
                     src="<%= slide.imageUrl %>"
                     alt="<%= slide.title || `Slide ${index + 1}` %>"
                     loading="<%= index === 0 ? 'eager' : 'lazy' %>"
+                    decoding="async"
                   />
                 </div>
 
@@ -167,6 +169,7 @@
                   src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop"
                   alt="Slide utama"
                   loading="eager"
+                  decoding="async"
                 />
               </div>
               <div class="slide-overlay">
@@ -225,6 +228,7 @@
                       alt="<%= provider.name %>"
                       class="provider-icon"
                       loading="lazy"
+                      decoding="async"
                     />
                   <% } else { %>
                     <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
@@ -241,7 +245,7 @@
             <a href="/" class="provider-link active">
               <div class="provider-icon-wrap">
                 <% if (settings.logoUrl) { %>
-                  <img src="<%= settings.logoUrl %>" alt="Provider" class="provider-icon" loading="lazy" />
+                  <img src="<%= settings.logoUrl %>" alt="Provider" class="provider-icon" loading="lazy" decoding="async" />
                 <% } else { %>
                   <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -265,7 +269,7 @@
           </div>
 
           <h1>
-            <%= currentProvider ? `RTP SLOT OMTOGEL  ${currentProvider.name} Live Update` : `${settings.siteName || "Live Promo Center"} - SLOT LIVE RTP` %>
+            <%= currentProvider ? `RTP SLOT OMTOGEL ${currentProvider.name} Live Update` : `${settings.siteName || "Live Promo Center"} - SLOT LIVE RTP` %>
           </h1>
 
           <p class="panel-intro">
@@ -310,6 +314,7 @@
                     src="<%= game.imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>"
                     alt="<%= game.title || 'Game image' %>"
                     loading="lazy"
+                    decoding="async"
                   />
                   <span class="play-chip"><span>Ayo Bermain</span></span>
                 </a>
@@ -330,6 +335,7 @@
                       alt="<%= game.providerName || 'Provider' %>"
                       class="pattern-provider-logo"
                       loading="lazy"
+                      decoding="async"
                     />
                   <% } else { %>
                     <div class="pattern-provider-fallback">
@@ -389,6 +395,21 @@
             </article>
           <% }) %>
         </div>
+
+        <% if (gamesHasMore) { %>
+          <div class="load-more-wrap" id="loadMoreWrap">
+            <button
+              type="button"
+              class="load-more-btn"
+              id="loadMoreBtn"
+              data-next-limit="<%= gamesNextLimit %>"
+            >
+              Muat Lagi
+            </button>
+          </div>
+        <% } else { %>
+          <div class="load-more-wrap" id="loadMoreWrap" style="display:none;"></div>
+        <% } %>
       <% } else { %>
         <div class="empty-state">
           <h3>Belum ada data game</h3>
@@ -475,7 +496,12 @@
 
     const toTopBtn = document.getElementById("toTopBtn");
     const gamesGrid = document.getElementById("gamesGrid");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    const loadMoreWrap = document.getElementById("loadMoreWrap");
     const globalLoginLink = <%- JSON.stringify(settings.loginButtonLink || "#") %>;
+    const providerSlugValue = <%- JSON.stringify(currentProvider ? currentProvider.slug : "") %>;
+    let currentLimit = <%- JSON.stringify(gamesCurrentLimit || 60) %>;
+    const loadStep = <%- JSON.stringify(gamesStep || 30) %>;
 
     function toggleTopButton() {
       if (window.scrollY > 280) {
@@ -538,6 +564,81 @@
       `).join("");
     }
 
+    function gameCardHtml(game) {
+      const isPragmatic = String(game.providerName || "").toLowerCase().includes("pragmatic");
+      const score = Number(game.score || game.winrate || 0);
+      const scoreFillClass = score >= 60 ? "high" : "medium";
+
+      return `
+        <article class="provider-game-card">
+          ${game.labelBadge ? `<div class="game-badge">${escapeHtml(game.labelBadge)}</div>` : ""}
+
+          <div class="provider-game-media">
+            <a
+              href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
+              class="provider-game-media-link"
+              target="_blank"
+              rel="nofollow noopener"
+              aria-label="Buka ${escapeHtml(game.title || "Game")}"
+            >
+              <img
+                src="${escapeHtml(game.imageUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop")}"
+                alt="${escapeHtml(game.title || "Game image")}"
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="play-chip"><span>Ayo Bermain</span></span>
+            </a>
+          </div>
+
+          <div class="provider-game-pattern">
+            <div class="pattern-head">
+              <div class="pattern-title">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h2>Pola Slot</h2>
+              </div>
+
+              ${game.providerLogoUrl ? `
+                <img
+                  src="${escapeHtml(game.providerLogoUrl)}"
+                  alt="${escapeHtml(game.providerName || "Provider")}"
+                  class="pattern-provider-logo"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ` : `
+                <div class="pattern-provider-fallback">
+                  ${isPragmatic ? "PP" : "PG"}
+                </div>
+              `}
+            </div>
+
+            <div class="pattern-divider"></div>
+
+            <div class="pattern-table">
+              ${renderPattern(game.pattern)}
+            </div>
+
+            <div class="time-row">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
+            </div>
+
+            <div class="score-box">
+              <div class="score-fill ${scoreFillClass}" style="width:${score}%">
+                <span>${score}%</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
     function renderGames(items) {
       if (!gamesGrid) return;
 
@@ -551,96 +652,73 @@
         return;
       }
 
-      gamesGrid.innerHTML = items
-        .map((game) => {
-          const isPragmatic = String(game.providerName || "").toLowerCase().includes("pragmatic");
-          const score = Number(game.score || game.winrate || 0);
-          const scoreFillClass = score >= 60 ? "high" : "medium";
+      gamesGrid.innerHTML = items.map(gameCardHtml).join("");
+    }
 
-          return `
-            <article class="provider-game-card">
-              ${game.labelBadge ? `<div class="game-badge">${escapeHtml(game.labelBadge)}</div>` : ""}
+    function updateLoadMoreUi(data) {
+      if (!loadMoreWrap) return;
 
-              <div class="provider-game-media">
-                <a
-                  href="${escapeHtml(globalLoginLink || game.gameLink || "#")}"
-                  class="provider-game-media-link"
-                  target="_blank"
-                  rel="nofollow noopener"
-                  aria-label="Buka ${escapeHtml(game.title || "Game")}"
-                >
-                  <img
-                    src="${escapeHtml(game.imageUrl || "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop")}"
-                    alt="${escapeHtml(game.title || "Game image")}"
-                    loading="lazy"
-                  />
-                  <span class="play-chip"><span>Ayo Bermain</span></span>
-                </a>
-              </div>
+      if (data && data.hasMore) {
+        loadMoreWrap.style.display = "";
+        if (loadMoreBtn) {
+          loadMoreBtn.dataset.nextLimit = String(data.nextLimit || (currentLimit + loadStep));
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = "Muat Lagi";
+        }
+      } else {
+        loadMoreWrap.style.display = "none";
+      }
+    }
 
-              <div class="provider-game-pattern">
-                <div class="pattern-head">
-                  <div class="pattern-title">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M4 19V5M10 19V9M16 19V12M22 19H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <h2>Pola Slot</h2>
-                  </div>
+    async function fetchGames(limitValue) {
+      const params = new URLSearchParams();
+      if (providerSlugValue) params.set("provider", providerSlugValue);
+      if (limitValue) params.set("limit", String(limitValue));
 
-                  ${game.providerLogoUrl ? `
-                    <img
-                      src="${escapeHtml(game.providerLogoUrl)}"
-                      alt="${escapeHtml(game.providerName || "Provider")}"
-                      class="pattern-provider-logo"
-                      loading="lazy"
-                    />
-                  ` : `
-                    <div class="pattern-provider-fallback">
-                      ${isPragmatic ? "PP" : "PG"}
-                    </div>
-                  `}
-                </div>
-
-                <div class="pattern-divider"></div>
-
-                <div class="pattern-table">
-                  ${renderPattern(game.pattern)}
-                </div>
-
-                <div class="time-row">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                  <span>Jam: ${escapeHtml(game.timeRange || game.jam || "-")}</span>
-                </div>
-
-                <div class="score-box">
-                  <div class="score-fill ${scoreFillClass}" style="width:${score}%">
-                    <span>${score}%</span>
-                  </div>
-                </div>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
+      const res = await fetch(`/api/games?${params.toString()}`, { cache: "no-store" });
+      return res.json();
     }
 
     async function refreshGames() {
       try {
-        const providerSlug = <%- JSON.stringify(currentProvider ? currentProvider.slug : "") %>;
-        const query = providerSlug ? `?provider=${encodeURIComponent(providerSlug)}` : "";
-        const res = await fetch(`/api/games${query}`, { cache: "no-store" });
-        const data = await res.json();
+        const data = await fetchGames(currentLimit);
 
         if (data && data.success) {
           renderGames((data.items || []).filter(item => item.isActive !== false));
+          currentLimit = Number(data.currentLimit || currentLimit);
+          updateLoadMoreUi(data);
         }
       } catch (err) {
         console.error("Gagal refresh games:", err);
       }
     }
+
+    async function loadMoreGames() {
+      if (!loadMoreBtn) return;
+
+      try {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = "Memuat...";
+
+        const nextLimit = Number(loadMoreBtn.dataset.nextLimit || (currentLimit + loadStep));
+        const data = await fetchGames(nextLimit);
+
+        if (data && data.success) {
+          renderGames((data.items || []).filter(item => item.isActive !== false));
+          currentLimit = Number(data.currentLimit || nextLimit);
+          updateLoadMoreUi(data);
+        } else {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = "Muat Lagi";
+        }
+      } catch (err) {
+        console.error("Gagal load more games:", err);
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = "Muat Lagi";
+      }
+    }
+
+    loadMoreBtn?.addEventListener("click", loadMoreGames);
 
     setInterval(refreshGames, 45000);
   </script>
