@@ -44,6 +44,10 @@ const FILES = {
 const DYNAMIC_UPDATE_MINUTES = 30;
 const DYNAMIC_UPDATE_MS = DYNAMIC_UPDATE_MINUTES * 60 * 1000;
 const HOT_WINRATE_MIN = 80;
+const HOME_GAME_LIMIT = 30;
+const TOP_RTP_ROWS = 3;
+const TOP_RTP_COLUMNS = 3;
+const TOP_RTP_COUNT = TOP_RTP_ROWS * TOP_RTP_COLUMNS;
 
 ensureDir(DATA_DIR);
 ensureDir(UPLOAD_DIR);
@@ -71,8 +75,22 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static(UPLOAD_DIR));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true,
+  })
+);
+
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true,
+  })
+);
 
 app.use((req, res, next) => {
   res.locals.adminPath = ADMIN_PATH;
@@ -633,12 +651,10 @@ function sortGamesForFrontend(games = []) {
     return toNumber(b.winrate, 0) - toNumber(a.winrate, 0);
   });
 
-  // 3 baris x 3 kolom = 9 game teratas
-  const topGames = sortedByRtp.slice(0, 9);
-  const restGames = sortedByRtp.slice(9);
+  const topGames = sortedByRtp.slice(0, TOP_RTP_COUNT);
+  const restGames = sortedByRtp.slice(TOP_RTP_COUNT);
 
-  // random sisa game
-  for (let i = restGames.length - 1; i > 0; i--) {
+  for (let i = restGames.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [restGames[i], restGames[j]] = [restGames[j], restGames[i]];
   }
@@ -664,7 +680,7 @@ function buildHomePayload(req, providerSlug = "") {
     games = games.filter((x) => x.providerId === currentProvider.id);
   }
 
-  games = sortGamesForFrontend(games);
+  games = sortGamesForFrontend(games).slice(0, HOME_GAME_LIMIT);
 
   const jakarta = getJakartaParts();
   const ogImage = toAbsoluteUrl(
@@ -724,6 +740,7 @@ app.get("/health", (req, res) => {
     time: new Date().toISOString(),
     adminPath: ADMIN_PATH,
     dynamicUpdateMinutes: DYNAMIC_UPDATE_MINUTES,
+    homeGameLimit: HOME_GAME_LIMIT,
   });
 });
 
@@ -751,7 +768,7 @@ app.get("/api/games", (req, res) => {
     games = provider ? games.filter((x) => x.providerId === provider.id) : [];
   }
 
-  games = sortGamesForFrontend(games);
+  games = sortGamesForFrontend(games).slice(0, HOME_GAME_LIMIT);
 
   return res.json({
     success: true,
@@ -1163,4 +1180,5 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Admin login path: /${ADMIN_PATH}/login`);
   console.log(`Dynamic game update interval: ${DYNAMIC_UPDATE_MINUTES} menit`);
+  console.log(`Home game limit: ${HOME_GAME_LIMIT}`);
 });
