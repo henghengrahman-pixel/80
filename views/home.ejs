@@ -223,13 +223,13 @@
               >
                 <div class="provider-icon-wrap">
                   <% if (provider.logoUrl) { %>
-                    <img
-                      src="<%= provider.logoUrl %>"
-                      alt="<%= provider.name %>"
-                      class="provider-icon"
-                      loading="lazy"
-                      decoding="async"
-                    />
+                 <img
+  src="<%= game.imageUrl || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>"
+  alt="<%= game.title || 'Game image' %>"
+  loading="lazy"
+  decoding="async"
+  fetchpriority="low"
+/>
                   <% } else { %>
                     <svg viewBox="0 0 24 24" fill="none" class="provider-icon" xmlns="http://www.w3.org/2000/svg">
                       <rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/>
@@ -720,7 +720,7 @@
 
     loadMoreBtn?.addEventListener("click", loadMoreGames);
 
-    setInterval(refreshGames, 45000);
+    setInterval(refreshGames, 180000);
   </script>
 </body>
 </html>
