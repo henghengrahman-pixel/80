@@ -377,15 +377,18 @@
                   <span>Jam: <%= game.timeRange || game.jam || "-" %></span>
                 </div>
 
-                <div class="score-box">
-                  <div
-                    class="score-fill <%= game.scoreClass || 'medium' %>"
-                    style="width:<%= game.score || game.winrate || 0 %>%"
-                  >
-                    <span><%= game.score || game.winrate || 0 %>%</span>
-                  </div>
-                </div>
-              </div>
+<%
+  const scoreValue = Number(game.score || game.winrate || 0);
+  const scoreClass = scoreValue >= 60 ? "high" : "medium";
+%>
+<div class="score-box">
+  <div
+    class="score-fill <%= scoreClass %>"
+    style="width:<%= scoreValue %>%"
+  >
+    <span><%= scoreValue %>%</span>
+  </div>
+</div>
             </article>
           <% }) %>
         </div>
@@ -615,9 +618,10 @@
                 </div>
 
                 <div class="score-box">
-                  <div class="score-fill ${escapeHtml(game.scoreClass || "medium")}" style="width:${Number(game.score || game.winrate || 0)}%">
-                    <span>${Number(game.score || game.winrate || 0)}%</span>
-                  </div>
+  <div class="score-fill ${Number(game.score || game.winrate || 0) >= 60 ? "high" : "medium"}" style="width:${Number(game.score || game.winrate || 0)}%">
+    <span>${Number(game.score || game.winrate || 0)}%</span>
+  </div>
+</div>
                 </div>
               </div>
             </article>
