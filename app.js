@@ -293,12 +293,35 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
-function randomJamRange() {
-  const startHour = randomInt(0, 23);
-  const startMinute = randomInt(0, 59);
-  const durationMinutes = randomInt(35, 320);
-  const startTotal = startHour * 60 + startMinute;
-  const endTotal = Math.min(startTotal + durationMinutes, 23 * 60 + 59);
+function randomJamRangeNearNow() {
+  const now = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+  );
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let offset;
+
+  // 75% dekat
+  if (Math.random() < 0.75) {
+    offset = randomInt(-20, 25);
+  }
+  // 20% agak jauh
+  else if (Math.random() < 0.95) {
+    offset = randomInt(-45, 50);
+  }
+  // 5% jauh sedikit
+  else {
+    offset = randomInt(-120, 120);
+  }
+
+  let startTotal = nowMinutes + offset;
+  if (startTotal < 0) startTotal += 1440;
+  if (startTotal > 1440) startTotal -= 1440;
+
+  const duration = randomInt(18, 42);
+  let endTotal = startTotal + duration;
+  if (endTotal > 1440) endTotal -= 1440;
 
   const sh = pad2(Math.floor(startTotal / 60));
   const sm = pad2(startTotal % 60);
