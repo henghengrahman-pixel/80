@@ -300,28 +300,24 @@ function randomJamRangeNearNow() {
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  let offset;
+  let offsetRoll = Math.random();
+  let offset = 0;
 
-  // 75% dekat
-  if (Math.random() < 0.75) {
+  if (offsetRoll < 0.75) {
     offset = randomInt(-20, 25);
-  }
-  // 20% agak jauh
-  else if (Math.random() < 0.95) {
+  } else if (offsetRoll < 0.95) {
     offset = randomInt(-45, 50);
-  }
-  // 5% jauh sedikit
-  else {
+  } else {
     offset = randomInt(-120, 120);
   }
 
   let startTotal = nowMinutes + offset;
   if (startTotal < 0) startTotal += 1440;
-  if (startTotal > 1440) startTotal -= 1440;
+  if (startTotal >= 1440) startTotal -= 1440;
 
   const duration = randomInt(18, 42);
   let endTotal = startTotal + duration;
-  if (endTotal > 1440) endTotal -= 1440;
+  if (endTotal >= 1440) endTotal -= 1440;
 
   const sh = pad2(Math.floor(startTotal / 60));
   const sm = pad2(startTotal % 60);
@@ -434,7 +430,7 @@ function getCurrentDynamicWindow() {
 
 function createDynamicGameState(providerName = "") {
   const score = randomPercent();
-  const timeRange = randomJamRange();
+  const timeRange = randomJamRangeNearNow();
 
   return {
     score,
@@ -509,6 +505,7 @@ function normalizeGame(game = {}, providers = []) {
   const providerId = normalizeText(game.providerId);
   const provider = providers.find((p) => String(p.id) === providerId) || null;
   const providerName = provider ? provider.name : normalizeText(game.providerName);
+
   const dynamic = {
     score: toNumber(game.score, 0),
     winrate: toNumber(game.winrate, toNumber(game.score, 0)),
@@ -582,7 +579,7 @@ function refreshGamesDynamicsIfNeeded(rawGames = [], providers = []) {
       dynamicBucketKey: windowInfo.bucketKey,
       dynamicUpdatedAt: windowInfo.nowIso,
       nextDynamicUpdateAt: windowInfo.endIso,
-      updatedAt: base.updatedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
   });
 
@@ -985,8 +982,6 @@ const createGameHandler = (req, res) => {
 
   const mergedGames = [...games, game];
   saveGames(mergedGames);
-
-  refreshGamesDynamicsIfNeeded(mergedGames, providers);
   return res.redirect(`/${ADMIN_PATH}/games`);
 };
 
