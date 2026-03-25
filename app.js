@@ -44,7 +44,9 @@ const FILES = {
 const DYNAMIC_UPDATE_MINUTES = 30;
 const DYNAMIC_UPDATE_MS = DYNAMIC_UPDATE_MINUTES * 60 * 1000;
 const HOT_WINRATE_MIN = 80;
-const HOME_GAME_LIMIT = 30;
+
+const HOME_INITIAL_LIMIT = 60;
+const HOME_LOAD_MORE_STEP = 30;
 const TOP_RTP_ROWS = 3;
 const TOP_RTP_COLUMNS = 3;
 const TOP_RTP_COUNT = TOP_RTP_ROWS * TOP_RTP_COLUMNS;
@@ -662,7 +664,23 @@ function sortGamesForFrontend(games = []) {
   return [...topGames, ...restGames];
 }
 
+function paginateGames(games = [], limit = HOME_INITIAL_LIMIT) {
+  const safeLimit = Math.max(1, Number(limit) || HOME_INITIAL_LIMIT);
+  return {
+    visibleItems: games.slice(0, safeLimit),
+    totalItems: games.length,
+    hasMore: games.length > safeLimit,
+    nextLimit: Math.min(games.length, safeLimit + HOME_LOAD_MORE_STEP),
+    currentLimit: safeLimit,
+  };
+}
+
 function buildHomePayload(req, providerSlug = "") {
+  const requestedLimit = Math.max(
+    1,
+    Number(req.query.limit || HOME_INITIAL_LIMIT) || HOME_INITIAL_LIMIT
+  );
+
   const settings = getSettings();
   const sliders = getSliders()
     .map(normalizeSlider)
@@ -680,8 +698,9 @@ function buildHomePayload(req, providerSlug = "") {
     games = games.filter((x) => x.providerId === currentProvider.id);
   }
 
-  games = sortGamesForFrontend(games).slice(0, HOME_GAME_LIMIT);
+  games = sortGamesForFrontend(games);
 
+  const paged = paginateGames(games, requestedLimit);
   const jakarta = getJakartaParts();
   const ogImage = toAbsoluteUrl(
     settings.logoUrl || (sliders[0] && sliders[0].imageUrl) || ""
@@ -691,7 +710,12 @@ function buildHomePayload(req, providerSlug = "") {
     settings,
     sliders,
     providers,
-    games,
+    games: paged.visibleItems,
+    totalGames: paged.totalItems,
+    gamesHasMore: paged.hasMore,
+    gamesNextLimit: paged.nextLimit,
+    gamesCurrentLimit: paged.currentLimit,
+    gamesStep: HOME_LOAD_MORE_STEP,
     currentProvider,
     jakartaNow: jakarta.fullDateTime,
     updateLabel: jakarta.fullDate,
@@ -740,7 +764,8 @@ app.get("/health", (req, res) => {
     time: new Date().toISOString(),
     adminPath: ADMIN_PATH,
     dynamicUpdateMinutes: DYNAMIC_UPDATE_MINUTES,
-    homeGameLimit: HOME_GAME_LIMIT,
+    initialLimit: HOME_INITIAL_LIMIT,
+    loadMoreStep: HOME_LOAD_MORE_STEP,
   });
 });
 
@@ -758,6 +783,11 @@ app.get("/api/jakarta-time", (req, res) => res.json(getJakartaParts()));
 
 app.get("/api/games", (req, res) => {
   const providerSlug = normalizeText(req.query.provider);
+  const requestedLimit = Math.max(
+    1,
+    Number(req.query.limit || HOME_INITIAL_LIMIT) || HOME_INITIAL_LIMIT
+  );
+
   const prepared = getPreparedGames();
   const providers = prepared.providers;
 
@@ -768,11 +798,17 @@ app.get("/api/games", (req, res) => {
     games = provider ? games.filter((x) => x.providerId === provider.id) : [];
   }
 
-  games = sortGamesForFrontend(games).slice(0, HOME_GAME_LIMIT);
+  games = sortGamesForFrontend(games);
+  const paged = paginateGames(games, requestedLimit);
 
   return res.json({
     success: true,
-    items: games,
+    items: paged.visibleItems,
+    totalItems: paged.totalItems,
+    hasMore: paged.hasMore,
+    nextLimit: paged.nextLimit,
+    currentLimit: paged.currentLimit,
+    step: HOME_LOAD_MORE_STEP,
     jakarta: getJakartaParts(),
     nextUpdateAt: prepared.dynamicWindow.endIso,
   });
@@ -1180,5 +1216,6 @@ app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Admin login path: /${ADMIN_PATH}/login`);
   console.log(`Dynamic game update interval: ${DYNAMIC_UPDATE_MINUTES} menit`);
-  console.log(`Home game limit: ${HOME_GAME_LIMIT}`);
+  console.log(`Home initial limit: ${HOME_INITIAL_LIMIT}`);
+  console.log(`Home load more step: ${HOME_LOAD_MORE_STEP}`);
 });
