@@ -629,17 +629,21 @@ function getPreparedGames() {
 }
 
 function sortGamesForFrontend(games = []) {
-  return [...games].sort((a, b) => {
-    const winA = toNumber(a.winrate, 0);
-    const winB = toNumber(b.winrate, 0);
-    if (winB !== winA) return winB - winA;
-
-    const sortA = toNumber(a.sortOrder, 0);
-    const sortB = toNumber(b.sortOrder, 0);
-    if (sortA !== sortB) return sortA - sortB;
-
-    return String(a.title || "").localeCompare(String(b.title || ""));
+  const sortedByRtp = [...games].sort((a, b) => {
+    return toNumber(b.winrate, 0) - toNumber(a.winrate, 0);
   });
+
+  // 3 baris x 3 kolom = 9 game teratas
+  const topGames = sortedByRtp.slice(0, 9);
+  const restGames = sortedByRtp.slice(9);
+
+  // random sisa game
+  for (let i = restGames.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [restGames[i], restGames[j]] = [restGames[j], restGames[i]];
+  }
+
+  return [...topGames, ...restGames];
 }
 
 function buildHomePayload(req, providerSlug = "") {
