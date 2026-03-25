@@ -921,6 +921,59 @@ select{
   font-size:14px;
 }
 
+/* LOAD MORE */
+.load-more-wrap{
+  display:flex;
+  justify-content:center;
+  margin-top:16px;
+}
+
+.load-more-btn{
+  min-width:180px;
+  min-height:44px;
+  padding:0 18px;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  color:#fff;
+  cursor:pointer;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.02) 18%, rgba(0,0,0,.16) 100%),
+    linear-gradient(180deg, #ff7a00 0%, #ff4d00 100%);
+  box-shadow:0 8px 18px rgba(0,0,0,.28);
+  position:relative;
+  overflow:hidden;
+  transition:transform .2s ease, filter .2s ease, opacity .2s ease;
+}
+
+.load-more-btn::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.28) 50%, transparent 100%);
+  background-size:220px 100%;
+  background-repeat:no-repeat;
+  background-position:-220px 0;
+  animation:loadMoreShine 3s linear infinite;
+  pointer-events:none;
+}
+
+.load-more-btn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.06);
+}
+
+.load-more-btn:disabled{
+  opacity:.7;
+  cursor:wait;
+}
+
+@keyframes loadMoreShine{
+  0%{background-position:-220px 0;}
+  100%{background-position:calc(100% + 220px) 0;}
+}
+
 /* BOTTOM NAV */
 .bottom-nav{
   position:fixed;
@@ -1361,6 +1414,18 @@ select{
     font-size:10px;
   }
 
+  .load-more-wrap{
+    margin-top:12px;
+    padding:0 8px;
+  }
+
+  .load-more-btn{
+    width:100%;
+    min-height:42px;
+    font-size:13px;
+    border-radius:10px;
+  }
+
   .bottom-nav a{
     font-size:11px;
     gap:3px;
@@ -1403,5 +1468,10 @@ select{
 
   .provider-game-card{
     padding:7px;
+  }
+
+  .load-more-btn{
+    min-height:40px;
+    font-size:12px;
   }
 }
